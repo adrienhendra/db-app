@@ -3,8 +3,14 @@ import React from 'react';
 // Semantic UI example
 import { Button, Icon } from 'semantic-ui-react';
 
+// DB common lib
+import DB from './common/db';
+
 export default class App extends React.Component {
   render() {
+    const mydb = new DB();
+    mydb.connect();
+
     return (
       <div className="window">
         <header className="toolbar toolbar-header">
