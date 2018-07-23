@@ -1,7 +1,10 @@
-// Common DB access
+/* Common DB access */
 
-// Load mysql module
+/* Load mysql module */
 import mysql from 'mysql';
+
+/* Alias for my console debug */
+const Console = console;
 
 export default class DB {
   constructor() {
@@ -16,8 +19,9 @@ export default class DB {
   connect() {
     this.connection.connect((err) => {
       if (err) {
-        console.log(err.code);
-        console.log(err.fatal);
+        Console.log(`[ERR] DB Connection, Code: ${err.code}, Fatal?: ${err.fatal}`);
+      } else {
+        Console.log('[AOK] DB Connected ...');
       }
     });
   }

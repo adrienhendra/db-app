@@ -17,6 +17,7 @@ const createWindow = async () => {
   mainWindow = new BrowserWindow({
     width: 960,
     height: 720,
+    frame: true,
   });
 
   // and load the index.html of the app.
