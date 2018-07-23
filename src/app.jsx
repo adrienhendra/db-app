@@ -1,13 +1,13 @@
 import React from 'react';
 
 /* Semantic UI example */
-import { Button, Icon } from 'semantic-ui-react';
+import { Button, Icon, Container } from 'semantic-ui-react';
 
 /* React Quill */
 import ReactQuill from 'react-quill';
 
 /* DB common lib */
-import DB from './common/db';
+import DB from './components/db';
 
 export default class App extends React.Component {
   constructor(props) {
@@ -79,14 +79,15 @@ export default class App extends React.Component {
                   <Icon name="pause" />
                   Hello World!
                 </Button>
-
-                <ReactQuill
-                  theme="snow"
-                  readOnly={false}
-                  value={this.state.text}
-                  modules={this.modules}
-                  onChange={this.handleChange}
-                />
+                <Container>
+                  <ReactQuill
+                    theme="snow"
+                    readOnly={false}
+                    value={this.state.text}
+                    modules={this.modules}
+                    onChange={this.handleChange}
+                  />
+                </Container>
               </div>
             </div>
           </div>

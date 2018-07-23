@@ -2,7 +2,12 @@ import { app, BrowserWindow } from 'electron';
 import installExtension, { REACT_DEVELOPER_TOOLS } from 'electron-devtools-installer';
 import { enableLiveReload } from 'electron-compile';
 
-if (require('electron-squirrel-startup')) app.quit();
+/* Required for squirrel, maybe? */
+// if (require('electron-squirrel-startup')) app.quit();
+const squi = require('electron-squirrel-startup');
+
+/* Required just to create desktop shortcut ? */
+if (squi) app.quit();
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
