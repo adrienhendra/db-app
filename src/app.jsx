@@ -20,7 +20,11 @@ export default class App extends React.Component {
         rating: 0,
         lastUpdate: 'unknown',
       },
+      tempdatas: [],
     };
+
+    /* Function bindings */
+    this.updateSqlResult = this.updateSqlResult.bind(this);
 
     /* React Quill setup */
     this.modules = {
@@ -49,11 +53,21 @@ export default class App extends React.Component {
       'link',
       'image',
     ];
+
+    /* Query database once */
+    const mydb = new DB();
+    mydb.connect();
+    mydb.readAll(this.updateSqlResult);
+  }
+
+  updateSqlResult(value) {
+    this.setState({ tempdatas: value });
   }
 
   render() {
-    const mydb = new DB();
-    mydb.connect();
+    // const mydb = new DB();
+    // mydb.connect();
+    // mydb.readAll(this.updateSqlResult);
 
     return (
       <div className="window">
@@ -87,6 +101,14 @@ export default class App extends React.Component {
                     modules={this.modules}
                     onChange={this.handleChange}
                   />
+                </Container>
+                <Container>
+                  {/* <ul>{this.state.tempdatas.map(dX => <li key={dX}>{dX}</li>)}</ul> */}
+                  <ul>
+                    {this.state.tempdatas.map(singleData => (
+                      <li key={singleData.id}>{singleData.quest_text.q}</li>
+                    ))}
+                  </ul>
                 </Container>
               </div>
             </div>
