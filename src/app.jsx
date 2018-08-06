@@ -6,6 +6,9 @@ import { Button, Icon, Container } from 'semantic-ui-react';
 /* React Quill */
 import ReactQuill from 'react-quill';
 
+/* React table */
+import ReactTable from 'react-table';
+
 /* DB common lib */
 import DB from './components/db';
 
@@ -69,6 +72,23 @@ export default class App extends React.Component {
     // mydb.connect();
     // mydb.readAll(this.updateSqlResult);
 
+    /* Trial react table */
+    const testDataTbl = [
+      { name: 'Lala', age: 20, friend: { name: 'lili', age: 23 } },
+      { name: 'Lulu', age: 12, friend: { name: 'lele', age: 24 } },
+    ];
+
+    const testDataCols = [
+      { Header: 'Name', accessor: 'name' },
+      {
+        Header: 'Age',
+        accessor: 'age',
+        Cell: props => <span className="number">{props.value}</span>,
+      },
+      { id: 'friendName', Header: 'Friend Name', accessor: d => d.friend.name },
+      { Header: () => <span> Friend Age </span>, accessor: 'friend.age' },
+    ];
+
     return (
       <div className="window">
         <header className="toolbar toolbar-header">
@@ -109,6 +129,9 @@ export default class App extends React.Component {
                       <li key={singleData.id}>{singleData.quest_text.q}</li>
                     ))}
                   </ul>
+                </Container>
+                <Container>
+                  <ReactTable data={testDataTbl} columns={testDataCols} />
                 </Container>
               </div>
             </div>
