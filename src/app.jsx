@@ -9,6 +9,9 @@ import ReactQuill from 'react-quill';
 /* React table */
 import ReactTable from 'react-table';
 
+/* SQLite3 */
+import sqlite3 from 'sqlite3';
+
 /* DB common lib */
 import DB from './components/db';
 
@@ -61,6 +64,25 @@ export default class App extends React.Component {
     const mydb = new DB();
     mydb.connect();
     mydb.readAll(this.updateSqlResult);
+
+    /* Try SQLite3 module */
+    const mySqDb = new sqlite3.Database('./db/sqdb.db');
+    mySqDb.serialize(function() {
+      mySqDb.run('CREATE TABLE lorem (info TEXT)');
+      let stmt = mySqDb.prepare('INSERT INTO lorem VALUES (?)');
+
+      for (let i = 0; i < 10; i++) {
+        stmt.run('Ipsum ' + i);
+      }
+
+      stmt.finalize();
+
+      mySqDb.each('SELECT rowid AS id, info FROM lorem', function(err, row) {
+        console.log(row.id + ': ' + row.info);
+      });
+    });
+
+    mySqDb.close();
   }
 
   updateSqlResult(value) {
