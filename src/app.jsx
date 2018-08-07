@@ -15,6 +15,9 @@ import sqlite3 from 'sqlite3';
 /* DB common lib */
 import DB from './components/db';
 
+/* Import predefined db file */
+// import '../db/sqdb.db';
+
 export default class App extends React.Component {
   constructor(props) {
     super(props);
@@ -61,15 +64,19 @@ export default class App extends React.Component {
     ];
 
     /* Query database once */
+    let sqdbStat = ''; // SQLite db status
     const mydb = new DB();
     mydb.connect();
     mydb.readAll(this.updateSqlResult);
 
     /* Try SQLite3 module */
     const mySqDb = new sqlite3.Database('./db/sqdb.db');
+    this.sqdbStat = 'OK';
     mySqDb.serialize(function() {
       mySqDb.run('CREATE TABLE lorem (info TEXT)');
-      let stmt = mySqDb.prepare('INSERT INTO lorem VALUES (?)');
+      let stmt = mySqDb.prepare('INSERT INTO lorem VALUES (?)', () => {
+        this.sqdbStat = 'SQL error!';
+      });
 
       for (let i = 0; i < 10; i++) {
         stmt.run('Ipsum ' + i);
@@ -151,6 +158,9 @@ export default class App extends React.Component {
                       <li key={singleData.id}>{singleData.quest_text.q}</li>
                     ))}
                   </ul>
+                </Container>
+                <Container>
+                  <h1>{`SQLite status: ${this.sqdbStat}`}</h1>
                 </Container>
                 <Container>
                   <ReactTable data={testDataTbl} columns={testDataCols} />
