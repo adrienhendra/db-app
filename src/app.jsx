@@ -1,11 +1,36 @@
 import React from 'react';
 
+/* File open dialog */
+// import dialog from 'electron';
+import electron from 'electron';
+// const { dialog } = require('electron').remote;
+const { dialog } = electron.remote;
+
+/* React router components */
+import { BrowserRouter as Router, Route, NavLink, Link } from 'react-router-dom';
+
 /* Semantic UI example */
-import { Button, Icon, Container } from 'semantic-ui-react';
+import {
+  Button,
+  Icon,
+  Container,
+  Divider,
+  Dropdown,
+  Grid,
+  Header,
+  Image,
+  List,
+  Menu,
+  Segment,
+  Sidebar,
+} from 'semantic-ui-react';
 
 /* My components */
-import './components/home';
-import Home from './components/home';
+// import './components/home';
+// import Home from './components/home';
+
+/* Alias for my console debug */
+const Console = console;
 
 /* React Quill */
 // import ReactQuill from 'react-quill';
@@ -18,9 +43,6 @@ import Home from './components/home';
 
 /* DB common lib */
 // import DB from './components/db';
-
-/* Import predefined db file */
-// import '../db/sqdb.db';
 
 export default class App extends React.Component {
   constructor(props) {
@@ -36,8 +58,47 @@ export default class App extends React.Component {
       tempdatas: [],
     };
 
-    // /* Function bindings */
+    /* Function bindings */
     // this.updateSqlResult = this.updateSqlResult.bind(this);
+    this.openFileButtonFn = this.openFileButtonFn.bind(this);
+
+    /* Router target */
+    this.Home = () => (
+      <div>
+        <p>This is home</p>
+        <Button icon labelPosition="left" onClick={() => this.openFileButtonFn()}>
+          <Icon name="pause" />
+          Hello World!
+        </Button>
+      </div>
+    );
+
+    this.ComposeApp = () => (
+      <div>
+        <h1>Test only</h1>
+        <Icon loading name="spinner" />
+        <Icon loading name="certificate" />
+        <Icon loading name="asterisk" />
+      </div>
+    );
+
+    this.ViewApp = () => (
+      <div>
+        <h1>This is view app</h1>
+      </div>
+    );
+
+    this.PrintApp = () => (
+      <div>
+        <h1>This is print app</h1>
+      </div>
+    );
+
+    this.AboutApp = () => (
+      <div>
+        <p>About Hello World</p>
+      </div>
+    );
 
     // /* React Quill setup */
     // this.modules = {
@@ -100,6 +161,11 @@ export default class App extends React.Component {
     this.setState({ tempdatas: value });
   }
 
+  openFileButtonFn() {
+    Console.log(dialog);
+    Console.log(dialog.showOpenDialog({ properties: ['openFile'] }));
+  }
+
   render() {
     // const mydb = new DB();
     // mydb.connect();
@@ -123,7 +189,45 @@ export default class App extends React.Component {
     // ];
 
     return (
-      <div className="window">
+      // <Router>
+      //   <div>
+      //     <Sidebar.Pushable as={Segment}>
+      //       <Sidebar as={Menu} animation="push" direction="top" visible>
+      //         <Menu.Item name="home" as={NavLink} exact to="/">
+      //           <Icon name="home" />
+      //           Home
+      //         </Menu.Item>
+      //         <Menu.Item name="view" as={NavLink} to="/view">
+      //           <Icon name="asterisk" />
+      //           View
+      //         </Menu.Item>
+      //         <Menu.Item name="compose" as={NavLink} to="/compose">
+      //           <Icon name="compose" />
+      //           Compose
+      //         </Menu.Item>
+      //         <Menu.Item name="print" as={NavLink} to="/print">
+      //           <Icon name="print" />
+      //           Print
+      //         </Menu.Item>
+      //         <Menu.Item name="about" as={NavLink} to="/about" position="right">
+      //           <Icon name="help circle" />
+      //           About
+      //         </Menu.Item>
+      //       </Sidebar>
+      //       <Sidebar.Pusher>
+      //         <Segment basic className="App-content">
+      //           <Route exact path="/" component={this.Home} />
+      //           <Route path="/view" component={ViewApp} />
+      //           <Route path="/compose" component={this.ComposeApp} />
+      //           <Route path="/print" component={PrintApp} />
+      //           <Route path="/about" component={AboutApp} />
+      //         </Segment>
+      //       </Sidebar.Pusher>
+      //     </Sidebar.Pushable>
+      //   </div>
+      // </Router>
+
+      <div>
         <header className="toolbar toolbar-header">
           <h1 className="title">Soepriatna DB App</h1>
           <div className="toolbar-actions">
@@ -142,13 +246,18 @@ export default class App extends React.Component {
             <div className="pane">
               <div>
                 <h2>Welcome to React!</h2>
-                <Button icon labelPosition="left">
+                <Button icon labelPosition="left" onClick={() => this.openFileButtonFn()}>
                   <Icon name="pause" />
                   Hello World!
                 </Button>
                 <Container>
-                  <Home />
+                  <div>
+                    <Icon loading name="spinner" />
+                    <Icon loading name="certificate" />
+                    <Icon loading name="asterisk" />
+                  </div>
                 </Container>
+                <Container>{/* <Home /> */}</Container>
               </div>
             </div>
           </div>
