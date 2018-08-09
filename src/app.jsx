@@ -3,17 +3,21 @@ import React from 'react';
 /* Semantic UI example */
 import { Button, Icon, Container } from 'semantic-ui-react';
 
+/* My components */
+import './components/home';
+import Home from './components/home';
+
 /* React Quill */
-import ReactQuill from 'react-quill';
+// import ReactQuill from 'react-quill';
 
 /* React table */
-import ReactTable from 'react-table';
+// import ReactTable from 'react-table';
 
 /* SQLite3 */
-import sqlite3 from 'sqlite3';
+// import sqlite3 from 'sqlite3';
 
 /* DB common lib */
-import DB from './components/db';
+// import DB from './components/db';
 
 /* Import predefined db file */
 // import '../db/sqdb.db';
@@ -32,64 +36,64 @@ export default class App extends React.Component {
       tempdatas: [],
     };
 
-    /* Function bindings */
-    this.updateSqlResult = this.updateSqlResult.bind(this);
+    // /* Function bindings */
+    // this.updateSqlResult = this.updateSqlResult.bind(this);
 
-    /* React Quill setup */
-    this.modules = {
-      formula: true,
-      toolbar: [
-        [{ header: [1, 2, 3, false] }],
-        ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-        [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
-        ['link', 'image'],
-        ['clean'],
-        ['formula'],
-      ],
-    };
+    // /* React Quill setup */
+    // this.modules = {
+    //   formula: true,
+    //   toolbar: [
+    //     [{ header: [1, 2, 3, false] }],
+    //     ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+    //     [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
+    //     ['link', 'image'],
+    //     ['clean'],
+    //     ['formula'],
+    //   ],
+    // };
 
-    /* React Quill formats */
-    this.formats = [
-      'header',
-      'bold',
-      'italic',
-      'underline',
-      'strike',
-      'blockquote',
-      'list',
-      'bullet',
-      'indent',
-      'link',
-      'image',
-    ];
+    // /* React Quill formats */
+    // this.formats = [
+    //   'header',
+    //   'bold',
+    //   'italic',
+    //   'underline',
+    //   'strike',
+    //   'blockquote',
+    //   'list',
+    //   'bullet',
+    //   'indent',
+    //   'link',
+    //   'image',
+    // ];
 
-    /* Query database once */
-    let sqdbStat = ''; // SQLite db status
-    const mydb = new DB();
-    mydb.connect();
-    mydb.readAll(this.updateSqlResult);
+    // /* Query database once */
+    // let sqdbStat = ''; // SQLite db status
+    // const mydb = new DB();
+    // mydb.connect();
+    // mydb.readAll(this.updateSqlResult);
 
-    /* Try SQLite3 module */
-    const mySqDb = new sqlite3.Database('./db/sqdb.db');
-    this.sqdbStat = 'OK';
-    mySqDb.serialize(function() {
-      mySqDb.run('CREATE TABLE lorem (info TEXT)');
-      let stmt = mySqDb.prepare('INSERT INTO lorem VALUES (?)', () => {
-        this.sqdbStat = 'SQL error!';
-      });
+    // /* Try SQLite3 module */
+    // const mySqDb = new sqlite3.Database('./db/sqdb.db');
+    // this.sqdbStat = 'OK';
+    // mySqDb.serialize(function() {
+    //   mySqDb.run('CREATE TABLE lorem (info TEXT)');
+    //   let stmt = mySqDb.prepare('INSERT INTO lorem VALUES (?)', () => {
+    //     this.sqdbStat = 'SQL error!';
+    //   });
 
-      for (let i = 0; i < 10; i++) {
-        stmt.run('Ipsum ' + i);
-      }
+    //   for (let i = 0; i < 10; i++) {
+    //     stmt.run('Ipsum ' + i);
+    //   }
 
-      stmt.finalize();
+    //   stmt.finalize();
 
-      mySqDb.each('SELECT rowid AS id, info FROM lorem', function(err, row) {
-        console.log(row.id + ': ' + row.info);
-      });
-    });
+    //   mySqDb.each('SELECT rowid AS id, info FROM lorem', function(err, row) {
+    //     console.log(row.id + ': ' + row.info);
+    //   });
+    // });
 
-    mySqDb.close();
+    // mySqDb.close();
   }
 
   updateSqlResult(value) {
@@ -101,22 +105,22 @@ export default class App extends React.Component {
     // mydb.connect();
     // mydb.readAll(this.updateSqlResult);
 
-    /* Trial react table */
-    const testDataTbl = [
-      { name: 'Lala', age: 20, friend: { name: 'lili', age: 23 } },
-      { name: 'Lulu', age: 12, friend: { name: 'lele', age: 24 } },
-    ];
+    // /* Trial react table */
+    // const testDataTbl = [
+    //   { name: 'Lala', age: 20, friend: { name: 'lili', age: 23 } },
+    //   { name: 'Lulu', age: 12, friend: { name: 'lele', age: 24 } },
+    // ];
 
-    const testDataCols = [
-      { Header: 'Name', accessor: 'name' },
-      {
-        Header: 'Age',
-        accessor: 'age',
-        Cell: props => <span className="number">{props.value}</span>,
-      },
-      { id: 'friendName', Header: 'Friend Name', accessor: d => d.friend.name },
-      { Header: () => <span> Friend Age </span>, accessor: 'friend.age' },
-    ];
+    // const testDataCols = [
+    //   { Header: 'Name', accessor: 'name' },
+    //   {
+    //     Header: 'Age',
+    //     accessor: 'age',
+    //     Cell: props => <span className="number">{props.value}</span>,
+    //   },
+    //   { id: 'friendName', Header: 'Friend Name', accessor: d => d.friend.name },
+    //   { Header: () => <span> Friend Age </span>, accessor: 'friend.age' },
+    // ];
 
     return (
       <div className="window">
@@ -143,27 +147,7 @@ export default class App extends React.Component {
                   Hello World!
                 </Button>
                 <Container>
-                  <ReactQuill
-                    theme="snow"
-                    readOnly={false}
-                    value={this.state.text}
-                    modules={this.modules}
-                    onChange={this.handleChange}
-                  />
-                </Container>
-                <Container>
-                  {/* <ul>{this.state.tempdatas.map(dX => <li key={dX}>{dX}</li>)}</ul> */}
-                  <ul>
-                    {this.state.tempdatas.map(singleData => (
-                      <li key={singleData.id}>{singleData.quest_text.q}</li>
-                    ))}
-                  </ul>
-                </Container>
-                <Container>
-                  <h1>{`SQLite status: ${this.sqdbStat}`}</h1>
-                </Container>
-                <Container>
-                  <ReactTable data={testDataTbl} columns={testDataCols} />
+                  <Home />
                 </Container>
               </div>
             </div>
