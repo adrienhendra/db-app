@@ -7,7 +7,18 @@ import electron from 'electron';
 import { HashRouter as Router, Route, NavLink } from 'react-router-dom';
 
 /* Semantic UI example */
-import { Button, Icon, Container, Grid, Header, Menu, Segment } from 'semantic-ui-react';
+import {
+  Button,
+  Icon,
+  Container,
+  Grid,
+  Header,
+  Menu,
+  Segment,
+  Form,
+  Label,
+  Input,
+} from 'semantic-ui-react';
 
 /* Get dialog from electron */
 const { dialog } = electron.remote;
@@ -43,6 +54,7 @@ export default class App extends React.Component {
         lastUpdate: 'unknown',
       },
       tempdatas: [],
+      dbDataFile: '',
     };
 
     /* Function bindings */
@@ -143,8 +155,14 @@ export default class App extends React.Component {
   }
 
   openFileButtonFn() {
-    Console.log(dialog);
-    Console.log(dialog.showOpenDialog({ properties: ['openFile'] }));
+    let filePath = '';
+    if (dialog !== null) {
+      filePath = dialog.showOpenDialog({ properties: ['openFile'] });
+    } else {
+      Console.log(`Error obtaining dialog object ${dialog}`);
+    }
+
+    this.setState({ dbDataFile: filePath[0] });
   }
 
   render() {
@@ -169,11 +187,22 @@ export default class App extends React.Component {
     //   { Header: () => <span> Friend Age </span>, accessor: 'friend.age' },
     // ];
 
+    const { dbDataFile } = this.state.dbDataFile;
+
     return (
       <Router>
         <Grid>
           <Grid.Row centered columns={1}>
             <Header>Soepriatna DB App</Header>
+          </Grid.Row>
+          <Grid.Row centered columns={1}>
+            <Grid.Column width={15}>
+              <Segment>
+                <Input label="Active database:" placeholder="./db/sqdb.db" />
+                <br />
+                <Button compact>Browse ...</Button>
+              </Segment>
+            </Grid.Column>
           </Grid.Row>
           <Grid.Row columns={2}>
             <Grid.Column width={2}>
