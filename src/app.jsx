@@ -7,18 +7,7 @@ import electron from 'electron';
 import { HashRouter as Router, Route, NavLink } from 'react-router-dom';
 
 /* Semantic UI example */
-import {
-  Button,
-  Icon,
-  Container,
-  Grid,
-  Header,
-  Menu,
-  Segment,
-  Form,
-  Label,
-  Input,
-} from 'semantic-ui-react';
+import { Button, Icon, Container, Grid, Header, Menu, Segment, Label } from 'semantic-ui-react';
 
 /* Get dialog from electron */
 const { dialog } = electron.remote;
@@ -54,18 +43,18 @@ export default class App extends React.Component {
         lastUpdate: 'unknown',
       },
       tempdatas: [],
-      dbDataFile: '',
+      dbDataFile: './db/sqdb.db',
     };
 
     /* Function bindings */
     // this.updateSqlResult = this.updateSqlResult.bind(this);
-    this.openFileButtonFn = this.openFileButtonFn.bind(this);
+    // this.openDbFileFn = this.openDbFileFn.bind(this);
 
     /* Router target */
     this.HomePage = () => (
       <div>
         <p>This is home</p>
-        <Button icon labelPosition="left" onClick={() => this.openFileButtonFn()}>
+        <Button icon labelPosition="left" onClick={() => this.openDbFileFn()}>
           <Icon name="pause" />
           Hello World!
         </Button>
@@ -92,6 +81,37 @@ export default class App extends React.Component {
         <h1>This is Delete Page</h1>
       </div>
     );
+
+    /* Methods */
+    this.openDbFileFn = () => {
+      let filePath = null;
+      if (dialog !== null) {
+        filePath = dialog.showOpenDialog({
+          filters: [
+            { name: 'DB File', extensions: ['db'] },
+            { name: 'All Files', extensions: ['*'] },
+          ],
+          properties: ['openFile'],
+        });
+        if (filePath === undefined) {
+          filePath = null;
+        }
+      } else {
+        Console.log(`Error obtaining dialog object ${dialog}`);
+      }
+
+      /* Need to update state? */
+      if (filePath !== null) {
+        this.setState({ dbDataFile: filePath[0] });
+      }
+
+      /* Automatically refresh DB cache */
+      this.refreshDbCache();
+    };
+
+    this.refreshDbCache = () => {
+      let dbCache = null;
+    };
 
     // /* React Quill setup */
     // this.modules = {
@@ -154,16 +174,27 @@ export default class App extends React.Component {
     this.setState({ tempdatas: value });
   }
 
-  openFileButtonFn() {
-    let filePath = '';
-    if (dialog !== null) {
-      filePath = dialog.showOpenDialog({ properties: ['openFile'] });
-    } else {
-      Console.log(`Error obtaining dialog object ${dialog}`);
-    }
+  // openDbFileFn() {
+  //   let filePath = null;
+  //   if (dialog !== null) {
+  //     filePath = dialog.showOpenDialog({
+  //       filters: [
+  //         { name: 'DB File', extensions: ['db'] },
+  //         { name: 'All Files', extensions: ['*'] },
+  //       ],
+  //       properties: ['openFile'],
+  //     });
+  //     if (filePath === undefined) {
+  //       filePath = null;
+  //     }
+  //   } else {
+  //     Console.log(`Error obtaining dialog object ${dialog}`);
+  //   }
 
-    this.setState({ dbDataFile: filePath[0] });
-  }
+  //   if (filePath !== null) {
+  //     this.setState({ dbDataFile: filePath[0] });
+  //   }
+  // }
 
   render() {
     // const mydb = new DB();
@@ -196,11 +227,26 @@ export default class App extends React.Component {
             <Header>Soepriatna DB App</Header>
           </Grid.Row>
           <Grid.Row centered columns={1}>
-            <Grid.Column width={15}>
-              <Segment>
-                <Input label="Active database:" placeholder="./db/sqdb.db" />
+            <Grid.Column width={16}>
+              <Segment textAlign="center">
+                <Container>
+                  <Label size="medium">Select active database:</Label>
+                  <Label size="medium" color="teal" onClick={() => this.openDbFileFn()}>
+                    {this.state.dbDataFile}
+                  </Label>
+                </Container>
                 <br />
-                <Button compact>Browse ...</Button>
+                <Container>
+                  <Button
+                    icon
+                    compact
+                    labelPosition="right"
+                    size="mini"
+                    onClick={() => this.refreshDbCache()}>
+                    <Icon name="refresh" />
+                    Refresh DB
+                  </Button>
+                </Container>
               </Segment>
             </Grid.Column>
           </Grid.Row>
@@ -217,7 +263,7 @@ export default class App extends React.Component {
               <Segment>
                 <div>
                   <h2>Welcome to React!</h2>
-                  <Button icon labelPosition="left" onClick={() => this.openFileButtonFn()}>
+                  <Button icon labelPosition="left" onClick={() => this.openDbFileFn()}>
                     <Icon name="pause" />
                     Hello World!
                   </Button>
