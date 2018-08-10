@@ -77,7 +77,6 @@
     "electron-builder": "^20.26.1",
     "electron-forge": "^5.2.2",
     "electron-prebuilt-compile": "2.0.4",
-    "electron-rebuild": "^1.8.2",
     "eslint": "^3",
     "eslint-config-airbnb": "^15",
     "eslint-plugin-import": "^2",

@@ -1,29 +1,16 @@
 import React from 'react';
 
-/* File open dialog */
-// import dialog from 'electron';
+/* Import electron components */
 import electron from 'electron';
-// const { dialog } = require('electron').remote;
-const { dialog } = electron.remote;
 
 /* React router components */
-import { BrowserRouter as Router, Route, NavLink, Link } from 'react-router-dom';
+import { HashRouter as Router, Route, NavLink } from 'react-router-dom';
 
 /* Semantic UI example */
-import {
-  Button,
-  Icon,
-  Container,
-  Divider,
-  Dropdown,
-  Grid,
-  Header,
-  Image,
-  List,
-  Menu,
-  Segment,
-  Sidebar,
-} from 'semantic-ui-react';
+import { Button, Icon, Container, Grid, Header, Menu, Segment } from 'semantic-ui-react';
+
+/* Get dialog from electron */
+const { dialog } = electron.remote;
 
 /* My components */
 // import './components/home';
@@ -63,7 +50,7 @@ export default class App extends React.Component {
     this.openFileButtonFn = this.openFileButtonFn.bind(this);
 
     /* Router target */
-    this.Home = () => (
+    this.HomePage = () => (
       <div>
         <p>This is home</p>
         <Button icon labelPosition="left" onClick={() => this.openFileButtonFn()}>
@@ -73,30 +60,24 @@ export default class App extends React.Component {
       </div>
     );
 
-    this.ComposeApp = () => (
+    this.CreatePage = () => (
       <div>
-        <h1>Test only</h1>
+        <h1>Create only</h1>
         <Icon loading name="spinner" />
         <Icon loading name="certificate" />
         <Icon loading name="asterisk" />
       </div>
     );
 
-    this.ViewApp = () => (
+    this.UpdatePage = () => (
       <div>
-        <h1>This is view app</h1>
+        <h1>This is Update app</h1>
       </div>
     );
 
-    this.PrintApp = () => (
+    this.DeletePage = () => (
       <div>
-        <h1>This is print app</h1>
-      </div>
-    );
-
-    this.AboutApp = () => (
-      <div>
-        <p>About Hello World</p>
+        <h1>This is Delete Page</h1>
       </div>
     );
 
@@ -189,84 +170,51 @@ export default class App extends React.Component {
     // ];
 
     return (
-      // <Router>
-      //   <div>
-      //     <Sidebar.Pushable as={Segment}>
-      //       <Sidebar as={Menu} animation="push" direction="top" visible>
-      //         <Menu.Item name="home" as={NavLink} exact to="/">
-      //           <Icon name="home" />
-      //           Home
-      //         </Menu.Item>
-      //         <Menu.Item name="view" as={NavLink} to="/view">
-      //           <Icon name="asterisk" />
-      //           View
-      //         </Menu.Item>
-      //         <Menu.Item name="compose" as={NavLink} to="/compose">
-      //           <Icon name="compose" />
-      //           Compose
-      //         </Menu.Item>
-      //         <Menu.Item name="print" as={NavLink} to="/print">
-      //           <Icon name="print" />
-      //           Print
-      //         </Menu.Item>
-      //         <Menu.Item name="about" as={NavLink} to="/about" position="right">
-      //           <Icon name="help circle" />
-      //           About
-      //         </Menu.Item>
-      //       </Sidebar>
-      //       <Sidebar.Pusher>
-      //         <Segment basic className="App-content">
-      //           <Route exact path="/" component={this.Home} />
-      //           <Route path="/view" component={ViewApp} />
-      //           <Route path="/compose" component={this.ComposeApp} />
-      //           <Route path="/print" component={PrintApp} />
-      //           <Route path="/about" component={AboutApp} />
-      //         </Segment>
-      //       </Sidebar.Pusher>
-      //     </Sidebar.Pushable>
-      //   </div>
-      // </Router>
-
-      <div>
-        <header className="toolbar toolbar-header">
-          <h1 className="title">Soepriatna DB App</h1>
-          <div className="toolbar-actions">
-            <div className="btn-group">
-              <button className="btn btn-default">
-                <span className="icon icon-home" />
-              </button>
-            </div>
-          </div>
-        </header>
-
-        <div className="window-content">
-          <div className="pane-group">
-            <div className="pane-sm sidebar">A</div>
-
-            <div className="pane">
-              <div>
-                <h2>Welcome to React!</h2>
-                <Button icon labelPosition="left" onClick={() => this.openFileButtonFn()}>
-                  <Icon name="pause" />
-                  Hello World!
-                </Button>
-                <Container>
-                  <div>
-                    <Icon loading name="spinner" />
-                    <Icon loading name="certificate" />
-                    <Icon loading name="asterisk" />
-                  </div>
-                </Container>
-                <Container>{/* <Home /> */}</Container>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <footer className="toolbar toolbar-footer">
-          <h1 className="title">By Adrien Soepriatna (c) 2018</h1>
-        </footer>
-      </div>
+      <Router>
+        <Grid>
+          <Grid.Row centered columns={1}>
+            <Header>Soepriatna DB App</Header>
+          </Grid.Row>
+          <Grid.Row columns={2}>
+            <Grid.Column width={2}>
+              <Menu fluid vertical tabular>
+                <Menu.Item name="home" as={NavLink} exact to="/" />
+                <Menu.Item name="create" as={NavLink} to="/create" />
+                <Menu.Item name="update" as={NavLink} to="/update" />
+                <Menu.Item name="delete" as={NavLink} to="/delete" />
+              </Menu>
+            </Grid.Column>
+            <Grid.Column width={14}>
+              <Segment>
+                <div>
+                  <h2>Welcome to React!</h2>
+                  <Button icon labelPosition="left" onClick={() => this.openFileButtonFn()}>
+                    <Icon name="pause" />
+                    Hello World!
+                  </Button>
+                  <Container>
+                    <div>
+                      <Icon loading name="spinner" />
+                      <Icon loading name="certificate" />
+                      <Icon loading name="asterisk" />
+                    </div>
+                  </Container>
+                  <Container>{/* <Home /> */}</Container>
+                </div>
+              </Segment>
+              <Segment basic className="App-content">
+                <Route exact path="/" component={this.HomePage} />
+                <Route path="/create" component={this.CreatePage} />
+                <Route path="/update" component={this.UpdatePage} />
+                <Route path="/delete" component={this.DeletePage} />
+              </Segment>
+            </Grid.Column>
+          </Grid.Row>
+          <Grid.Row centered columns={1}>
+            <Header>By Adrien Soepriatna (c) 2018</Header>
+          </Grid.Row>
+        </Grid>
+      </Router>
     );
   }
 }
