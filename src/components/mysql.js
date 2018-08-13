@@ -17,7 +17,7 @@ export default class MYSQLDB {
   }
 
   connect() {
-    this.connection.connect(err => {
+    this.connection.connect((err) => {
       if (err) {
         Console.log(`[ERR] DB Connection, Code: ${err.code}, Fatal?: ${err.fatal}`);
       } else {

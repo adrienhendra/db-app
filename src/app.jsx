@@ -9,12 +9,13 @@ import { HashRouter as Router, Route, NavLink } from 'react-router-dom';
 /* Semantic UI example */
 import { Button, Icon, Container, Grid, Header, Menu, Segment, Label } from 'semantic-ui-react';
 
-/* Get dialog from electron */
-const { dialog } = electron.remote;
-
 /* My components */
 // import './components/home';
 // import Home from './components/home';
+import DB from './components/db';
+
+/* Get dialog from electron */
+const { dialog } = electron.remote;
 
 /* Alias for my console debug */
 const Console = console;
@@ -45,6 +46,20 @@ export default class App extends React.Component {
       tempdatas: [],
       dbDataFile: './db/sqdb.db',
     };
+
+    /* Create DB */
+    this.db = new DB();
+
+    /* TRY SQLite test */
+    this.db.connect();
+    this.db.doSingleQuery("SELECT * FROM 'QUESTIONS'", (err, res) => {
+      if (err === null) {
+        Console.log(res);
+      } else {
+        Console.log(`SQL Error ${err}: ${res}`);
+      }
+    });
+    this.db.disconnect();
 
     /* Function bindings */
     // this.updateSqlResult = this.updateSqlResult.bind(this);

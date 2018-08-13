@@ -1,5 +1,8 @@
 /* DB access with SQLite */
 
+/* Load FS module */
+import fs from 'fs';
+
 /* Load SQLite3 module */
 import sqlite3 from 'sqlite3';
 
@@ -8,26 +11,72 @@ const Console = console;
 
 export default class SQDB {
   constructor() {
+    Console.log('SQDB Constructor called !!!');
+
+    /* Init */
     this.connection = null;
 
-    // this.connection = mysql.createConnection({
-    //   host: 'as-server.local',
-    //   user: 'soep-db-app',
-    //   password: 'Nike@12345',
-    //   database: 'soep-db-app',
-    // });
+    /* Object state */
+    this.state = {
+      connected: false,
+      lastStatus: '',
+    };
   }
 
-  connect() {
-    this.connection = null;
+  connect(dbPath = './db/sqdb.db') {
+    if (!this.state.connected) {
+      if (fs.existsSync(dbPath)) {
+        Console.log(`DB file (${dbPath}) exists`);
+        this.state.connected = true;
+      } else {
+        Console.log(`DB file (${dbPath}) doesn't exists`);
+        this.state.connected = false;
+      }
 
-    // this.connection.connect(err => {
-    //   if (err) {
-    //     Console.log(`[ERR] DB Connection, Code: ${err.code}, Fatal?: ${err.fatal}`);
-    //   } else {
-    //     Console.log('[AOK] DB Connected ...');
-    //   }
-    // });
+      /* Connect to db */
+      this.connection = new sqlite3.Database(dbPath);
+      this.state.lastStatus = 'OK';
+
+      Console.log('SQDB connected !!!');
+    } else {
+      Console.log('SQDB is already connected !!!');
+    }
+    return this.state.connected;
+  }
+
+  disconnect() {
+    if (this.state.connected) {
+      /* Disconnect */
+      this.connection.close((err) => {
+        this.state.lastStatus = err;
+      });
+      this.state.connected = false;
+      Console.log('SQDB disconnected !!!');
+    } else {
+      Console.log('SQDB is not connected !!!');
+    }
+  }
+
+  /* Main query function */
+  doSingleQuery(sqlStatement, callbackFn = null) {
+    let isOk = false;
+    if (this.state.connected) {
+      /* Prepare statement */
+      this.connection.serialize(() => {
+        this.connection.all(sqlStatement, callbackFn);
+      });
+
+      // let sql = this.connection.prepare(sqlStatement);
+      // sql.finalize();
+
+      // retVal =
+      isOk = true;
+    } else {
+      Console.log('SQDB is not connected !!!');
+      isOk = false;
+    }
+
+    return isOk;
   }
 
   readAll(callbackFn) {
