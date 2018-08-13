@@ -52,13 +52,16 @@ export default class App extends React.Component {
 
     /* TRY SQLite test */
     this.db.connect();
-    this.db.doSingleQuery("SELECT * FROM 'QUESTIONS'", (err, res) => {
-      if (err === null) {
-        Console.log(res);
-      } else {
-        Console.log(`SQL Error ${err}: ${res}`);
-      }
-    });
+    this.db.doSingleQuery(
+      "SELECT ID AS id, CATEGORY AS cat, QUESTION_DATA AS question, DIFFICULTY_LV AS lv, CREATED_DATE AS cd, LAST_UPDATED AS lu FROM 'QUESTIONS'",
+      (err, res) => {
+        if (err === null) {
+          Console.log(res);
+        } else {
+          Console.log(`SQL Error ${err}`);
+        }
+      },
+    );
     this.db.disconnect();
 
     /* Function bindings */

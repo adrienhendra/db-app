@@ -25,7 +25,7 @@ export default class DB {
     this.dbConn.disconnect();
   }
 
-  /* Common CRUD functions here */
+  /* Common SQL functions here */
   doSingleQuery(sqlStatement, callbackFn = null) {
     if (this.dbConn === null) {
       return null;
@@ -34,4 +34,6 @@ export default class DB {
     /* Connection is valid */
     return this.dbConn.doSingleQuery(sqlStatement, callbackFn);
   }
+
+  /* Application specific queries */
 }
