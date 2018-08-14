@@ -8,7 +8,17 @@ import electron, { ipcRenderer } from 'electron';
 import { HashRouter as Router, Route, NavLink } from 'react-router-dom';
 
 /* Semantic UI example */
-import { Button, Icon, Container, Grid, Header, Menu, Segment, Label } from 'semantic-ui-react';
+import {
+  Button,
+  Icon,
+  Container,
+  Grid,
+  Header,
+  Menu,
+  Segment,
+  Label,
+  Dropdown,
+} from 'semantic-ui-react';
 
 /* My components */
 // import './components/home';
@@ -67,14 +77,22 @@ export default class App extends React.Component {
       </div>
     );
 
-    this.CreatePage = () => (
-      <div>
-        <h1>Create only</h1>
-        <Icon loading name="spinner" />
-        <Icon loading name="certificate" />
-        <Icon loading name="asterisk" />
-      </div>
-    );
+    this.CreatePage = () => {
+      const dataOptions = [
+        { key: '1', value: '1', text: 'LALA' },
+        { key: '2', value: '2', text: 'LILI' },
+        { key: '3', value: '3', text: 'LULU' },
+      ];
+      return (
+        <div>
+          <h1>Create only</h1>
+          <Icon loading name="spinner" />
+          <Icon loading name="certificate" />
+          <Icon loading name="asterisk" />
+          <Dropdown placeholder="Category" multiple search selection options={dataOptions} />
+        </div>
+      );
+    };
 
     this.UpdatePage = () => (
       <div>
