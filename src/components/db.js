@@ -21,66 +21,58 @@ export default class DB {
       lastQuestionList: null,
     };
 
-    /* Bind methods */
-    this.setDbParam = this.setDbParam.bind(this);
-    this.connect = this.connect.bind(this);
-    this.disconnect = this.disconnect.bind(this);
-    this.doSingleQuery = this.doSingleQuery.bind(this);
-    this.updateCategoryList = this.updateCategoryList.bind(this);
-    this.updateQuestionList = this.updateQuestionList.bind(this);
-    this.insertNewQuestion = this.insertNewQuestion.bind(this);
-  }
+    this.setDbParam = (dbPath) => {
+      this.dbConnParam = { type: 'sqlite3', path: dbPath };
+    };
 
-  setDbParam(dbPath) {
-    this.dbConnParam = { type: 'sqlite3', path: dbPath };
-  }
-
-  connect() {
-    const dbParam = this.dbConnParam;
-    if (dbParam !== null) {
-      if (dbParam.type === 'sqlite3') {
-        this.dbConn.connect(dbParam);
+    this.connect = () => {
+      const dbParam = this.dbConnParam;
+      if (dbParam !== null) {
+        if (dbParam.type === 'sqlite3') {
+          this.dbConn.connect(dbParam);
+        } else {
+          Console.log(`DB ${dbParam.type} is not supported yet. Defaults to SQLite3`);
+          /* Defaults to local SQLITE DB */
+          this.dbConn.connect();
+        }
       } else {
-        Console.log(`DB ${dbParam.type} is not supported yet. Defaults to SQLite3`);
         /* Defaults to local SQLITE DB */
+        Console.log('DB no param supplied. Defaults to SQLite3');
         this.dbConn.connect();
       }
-    } else {
-      /* Defaults to local SQLITE DB */
-      Console.log('DB no param supplied. Defaults to SQLite3');
-      this.dbConn.connect();
-    }
-  }
+    };
 
-  disconnect() {
-    this.dbConn.disconnect();
-  }
+    this.disconnect = () => {
+      this.dbConn.disconnect();
+    };
 
-  /* Common SQL functions here */
-  doSingleQuery(sqlStatement, callbackFn = null) {
-    if (this.dbConn === null) {
-      return null;
-    }
+    /* Common SQL functions here */
+    this.doSingleQuery = (sqlStatement, callbackFn = null) => {
+      if (this.dbConn === null) {
+        return null;
+      }
 
-    /* Connection is valid */
-    return this.dbConn.doSingleQuery(sqlStatement, callbackFn);
-  }
+      /* Connection is valid */
+      return this.dbConn.doSingleQuery(sqlStatement, callbackFn);
+    };
 
-  /* Application specific queries */
-  updateCategoryList() {
-    this.state.lastCatList = null;
-  }
+    /* Application specific queries */
+    this.updateCategoryList = () => {
+      this.state.lastCatList = null;
+    };
 
-  updateQuestionList() {
-    this.state.lastQuestionList = null;
-  }
+    this.updateQuestionList = () => {
+      this.state.lastQuestionList = null;
+    };
 
-  insertNewQuestion(category, questionData, difficultyLv) {
-    if (this.dbConn === null) {
-      return null;
-    }
+    this.insertNewQuestion = async (category, questionData, difficultyLv) => {
+      if (this.dbConn === null) {
+        return null;
+      }
 
-    /* Connection is valid */
-    return this.dbConn.insertNewQuestion(category, questionData, difficultyLv);
+      /* Connection is valid */
+      const res = await this.dbConn.insertNewQuestion(category, questionData, difficultyLv);
+      return res;
+    };
   }
 }

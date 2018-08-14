@@ -23,149 +23,130 @@ export default class SQDB {
     };
 
     /* Bind methods */
-    this.connect = this.connect.bind(this);
-    this.disconnect = this.disconnect.bind(this);
-    this.doSingleQuery = this.doSingleQuery.bind(this);
-    this.updateCategoryList = this.updateCategoryList.bind(this);
-    this.updateQuestionList = this.updateQuestionList.bind(this);
-    this.insertNewQuestion = this.insertNewQuestion.bind(this);
-  }
+    // this.connect = this.connect.bind(this);
+    // this.disconnect = this.disconnect.bind(this);
+    // this.doSingleQuery = this.doSingleQuery.bind(this);
+    // this.updateCategoryList = this.updateCategoryList.bind(this);
+    // this.updateQuestionList = this.updateQuestionList.bind(this);
+    // this.insertNewQuestion = this.insertNewQuestion.bind(this);
 
-  connect(dbPath = './db/sqdb.db') {
-    if (!this.state.connected) {
-      if (fs.existsSync(dbPath)) {
-        Console.log(`DB file (${dbPath}) exists`);
-        this.state.connected = true;
+    this.connect = (dbPath = './db/sqdb.db') => {
+      if (!this.state.connected) {
+        if (fs.existsSync(dbPath)) {
+          Console.log(`DB file (${dbPath}) exists`);
+          this.state.connected = true;
+        } else {
+          Console.log(`DB file (${dbPath}) doesn't exists`);
+          this.state.connected = false;
+        }
+
+        /* Connect to db */
+        this.connection = new sqlite3.Database(dbPath);
+        this.state.lastStatus = 'OK';
+
+        /* Set pragmas */
+        this.connection.run('PRAGMA foreign_keys = ON');
+
+        Console.log('SQDB connected !!!');
       } else {
-        Console.log(`DB file (${dbPath}) doesn't exists`);
+        Console.log('SQDB is already connected !!!');
+      }
+      return this.state.connected;
+    };
+
+    this.disconnect = () => {
+      if (this.state.connected) {
+        /* Disconnect */
+        this.connection.close((err) => {
+          this.state.lastStatus = err;
+        });
         this.state.connected = false;
+        Console.log('SQDB disconnected !!!');
+      } else {
+        Console.log('SQDB is not connected !!!');
+      }
+    };
+
+    /* Main query function */
+    this.doSingleQuery = (sqlStatement, callbackFn = null) => {
+      let isOk = false;
+      if (this.state.connected) {
+        /* Prepare statement */
+        this.connection.serialize(() => {
+          this.connection.all(sqlStatement, callbackFn);
+        });
+
+        // let sql = this.connection.prepare(sqlStatement);
+        // sql.finalize();
+
+        // retVal =
+        isOk = true;
+      } else {
+        Console.log('SQDB is not connected !!!');
+        isOk = false;
       }
 
-      /* Connect to db */
-      this.connection = new sqlite3.Database(dbPath);
-      this.state.lastStatus = 'OK';
+      return isOk;
+    };
 
-      Console.log('SQDB connected !!!');
-    } else {
-      Console.log('SQDB is already connected !!!');
-    }
-    return this.state.connected;
-  }
+    /* Application specific queries */
+    this.updateCategoryList = () => {
+      let isOk = false;
+      if (this.state.connected) {
+        Console.log('updateCategoryList: TODO!');
+      } else {
+        Console.log('SQDB is not connected !!!');
+        isOk = false;
+      }
+      return isOk;
+    };
 
-  disconnect() {
-    if (this.state.connected) {
-      /* Disconnect */
-      this.connection.close((err) => {
-        this.state.lastStatus = err;
+    this.updateQuestionList = () => {
+      let isOk = false;
+      if (this.state.connected) {
+        Console.log('updateQuestionList: TODO!');
+      } else {
+        Console.log('SQDB is not connected !!!');
+        isOk = false;
+      }
+      return isOk;
+    };
+
+    this.insertNewQuestion = (category, questionData, difficultyLv) =>
+      new Promise((resolve, reject) => {
+        const retVal = { success: false, errMsg: null, data: null };
+        if (this.state.connected) {
+          /* Prepare statement */
+          this.connection.serialize(() => {
+            /* Run */
+            this.connection.run(
+              'INSERT INTO QUESTIONS (CATEGORY, QUESTION_DATA, DIFFICULTY_LV) VALUES($cat, $qd, $dl)',
+              {
+                $cat: category,
+                $qd: questionData,
+                $dl: difficultyLv,
+              },
+              (err) => {
+                if (err !== null) {
+                  Console.log(`SQDB error: ${err}`);
+                  retVal.success = false;
+                  retVal.errMsg = `SQDB error code: ${err.name}, ${err.message}`;
+                  reject(retVal);
+                } else {
+                  Console.log('SQDB insert new question OK!');
+                  retVal.success = true;
+                  retVal.errMsg = null;
+                  resolve(retVal);
+                }
+              },
+            );
+          });
+        } else {
+          Console.log('SQDB is not connected!');
+          retVal.success = false;
+          retVal.errMsg = 'SQDB is not connected!';
+          reject(retVal);
+        }
       });
-      this.state.connected = false;
-      Console.log('SQDB disconnected !!!');
-    } else {
-      Console.log('SQDB is not connected !!!');
-    }
-  }
-
-  /* Main query function */
-  doSingleQuery(sqlStatement, callbackFn = null) {
-    let isOk = false;
-    if (this.state.connected) {
-      /* Prepare statement */
-      this.connection.serialize(() => {
-        this.connection.all(sqlStatement, callbackFn);
-      });
-
-      // let sql = this.connection.prepare(sqlStatement);
-      // sql.finalize();
-
-      // retVal =
-      isOk = true;
-    } else {
-      Console.log('SQDB is not connected !!!');
-      isOk = false;
-    }
-
-    return isOk;
-  }
-
-  /* Application specific queries */
-  updateCategoryList() {
-    let isOk = false;
-    if (this.state.connected) {
-    } else {
-      Console.log('SQDB is not connected !!!');
-      isOk = false;
-    }
-    return isOk;
-  }
-
-  updateQuestionList() {
-    let isOk = false;
-    if (this.state.connected) {
-    } else {
-      Console.log('SQDB is not connected !!!');
-      isOk = false;
-    }
-    return isOk;
-  }
-
-  insertNewQuestion(category, questionData, difficultyLv) {
-    let isOk = false;
-    if (this.state.connected) {
-      /* Prepare statement */
-      this.connection.serialize(() => {
-        this.connection.run(
-          'INSERT INTO QUESTIONS (CATEGORY, QUESTION_DATA, DIFFICULTY_LV) VALUES($cat, $qd, $dl)',
-          {
-            $cat: category,
-            $qd: questionData,
-            $dl: difficultyLv,
-          },
-        );
-      });
-      isOk = true;
-    } else {
-      Console.log('SQDB is not connected !!!');
-      isOk = false;
-    }
-    return isOk;
-  }
-
-  /* !!!!!!!!!!!!!!!!!!!!!!!!!!!! */
-  readAll(callbackFn) {
-    this.connection = null;
-
-    /* Call callback function */
-    if (callbackFn !== null) callbackFn();
-
-    // const sqlTxt = 'SELECT * FROM `questions` WHERE 1';
-    // let result = null;
-    // this.connection.query(sqlTxt, (err, res, field) => {
-    //   if (err) {
-    //     Console.log('Query error!');
-    //     result = null;
-    //   } else {
-    //     Console.log(res);
-    //     Console.log(field);
-
-    //     result = [];
-    //     let i = 0;
-    //     for (i = 0; i < res.length; i += 1) {
-    //       const obj = {
-    //         id: res[i].id,
-    //         cat_id: res[i].cat_id,
-    //         subcat_id: res[i].subcat_id,
-    //         level: res[i].level,
-    //         quest_text: JSON.parse(res[i].quest_text),
-    //         comment: res[i].comment,
-    //         date_created: res[i].date_created,
-    //         date_modified: res[i].date_modified,
-    //       };
-    //       result.push(obj);
-    //     }
-    //     cb(result);
-    //   }
-    // });
-
-    return result;
   }
 }

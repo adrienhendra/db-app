@@ -34,6 +34,7 @@ const handleDbSyncCommands = async (event, arg) => {
   const { cmd, data } = arg;
   const retVal = {
     cmd,
+    errMsg: null,
     data: null,
   };
 
@@ -41,20 +42,32 @@ const handleDbSyncCommands = async (event, arg) => {
 
   switch (cmd) {
     case 'insertNew':
-      Console.log(data);
-      res = mydb.insertNewQuestion(JSON.stringify(data.cat), JSON.stringify(data.qd), data.dl);
-      retVal.data = { success: res, data: null };
+      try {
+        res = await mydb.insertNewQuestion(
+          JSON.stringify(data.cat),
+          JSON.stringify(data.qd),
+          data.dl,
+        );
+        retVal.errMsg = res.errMsg;
+        retVal.data = { success: res.success, data: res.data };
+      } catch (err) {
+        // Console.log(err);
+        retVal.errMsg = err.errMsg;
+        retVal.data = { success: err.success, data: err.data };
+      }
       break;
 
     case 'hello':
       Console.log(data);
       res = 'world';
+      retVal.errMsg = null;
       retVal.data = { success: true, data: res };
       break;
 
     default:
       Console.log(`CMD: ${cmd}, DATA: ${data} is not supported yet (SYNC).`);
-      retVal.data = { success: false, errMsg: 'This command is not supported yet.' };
+      retVal.errMsg = 'This command is not supported yet.';
+      retVal.data = { success: false, data: null };
       break;
   }
 
@@ -66,6 +79,7 @@ const handleDbAsyncCommands = async (event, arg) => {
   const { cmd, data } = arg;
   const retVal = {
     cmd,
+    errMsg: null,
     data: null,
   };
 
@@ -75,18 +89,21 @@ const handleDbAsyncCommands = async (event, arg) => {
     case 'reloadDb':
       Console.log(data);
       res = true;
+      retVal.errMsg = null;
       retVal.data = { success: res, data: null };
       break;
 
     case 'hello':
       Console.log(data);
       res = 'world';
+      retVal.errMsg = null;
       retVal.data = { success: true, data: res };
       break;
 
     default:
       Console.log(`CMD: ${cmd}, DATA: ${data} is not supported yet (ASYNC).`);
-      retVal.data = { success: false, errMsg: 'This command is not supported yet.' };
+      retVal.errMsg = 'This command is not supported yet.';
+      retVal.data = { success: false, data: null };
       break;
   }
   event.sender.send('db-async-command-resp', retVal);

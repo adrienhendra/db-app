@@ -142,12 +142,21 @@ export default class App extends React.Component {
     };
 
     this.insertQuestion = () => {
-      const isOk = this.sendDbCmdSync('insertNew', {
-        cat: { categories: [2] },
+      const res = this.sendDbCmdSync('insertNew', {
+        cat: 2,
         qd: { q: 'Test Question', o: ['a', 'b', 'c', 'd'], a: ['a'] },
         dl: 5,
       });
-      Console.log(`Insert data is ${isOk ? 'OK!' : 'NOT OK!'}`);
+
+      /* Extract result */
+      const { cmd, errMsg, data } = res;
+      if (cmd === 'insertNew' && data !== null) {
+        if (data.success === true) {
+          Console.log('Insert data succeeded!');
+        } else {
+          Console.log(`Insert data failed: ${errMsg}, data: ${data}`);
+        }
+      }
     };
 
     // /* React Quill setup */
@@ -180,14 +189,14 @@ export default class App extends React.Component {
 
     /* IPC handlers */
     this.handleIpcAsyncResp = (event, arg) => {
-      const { cmd, data } = arg;
+      const { cmd, errMsg, data } = arg;
 
       switch (cmd) {
         case 'reloadDb':
           if (data.success === true) {
             Console.log('Reload DB succeeded');
           } else {
-            Console.log(`Reload DB failed: ${data}`);
+            Console.log(`Reload DB failed: ${errMsg}, data: ${data}`);
           }
           break;
 
@@ -196,15 +205,19 @@ export default class App extends React.Component {
           break;
 
         default:
-          Console.log(`CMD: ${cmd}, DATA: ${data} is not supported yet (ASYNC).`);
+          Console.log(
+            `CMD: ${cmd} is not supported yet (ASYNC). Error MSG: ${errMsg}, data: ${data}`,
+          );
           break;
       }
     };
 
     /* Connect IPC */
     /* Send SYNC command through IPC */
-    this.sendDbCmdSync = (dbCmd, paramObj = null) =>
-      ipc.sendSync('db-sync-command-req', { cmd: dbCmd, data: paramObj });
+    this.sendDbCmdSync = (dbCmd, paramObj = null) => {
+      const res = ipc.sendSync('db-sync-command-req', { cmd: dbCmd, data: paramObj });
+      return res;
+    };
 
     /* Send ASYNC command through IPC */
     this.sendDbCmdAsync = (dbCmd, paramObj = null) =>
