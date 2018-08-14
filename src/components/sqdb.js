@@ -122,6 +122,7 @@ export default class SQDB {
           },
         );
       });
+      isOk = true;
     } else {
       Console.log('SQDB is not connected !!!');
       isOk = false;

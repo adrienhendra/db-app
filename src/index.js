@@ -29,15 +29,78 @@ const isDevMode = process.execPath.match(/[\\/]electron/);
 
 if (isDevMode) enableLiveReload({ strategy: 'react-hmr' });
 
+/* This is to handle SYNC commands */
+const handleDbSyncCommands = async (event, arg) => {
+  const { cmd, data } = arg;
+  const retVal = {
+    cmd,
+    data: null,
+  };
+
+  let res = null;
+
+  switch (cmd) {
+    case 'insertNew':
+      Console.log(data);
+      res = mydb.insertNewQuestion(JSON.stringify(data.cat), JSON.stringify(data.qd), data.dl);
+      retVal.data = { success: res, data: null };
+      break;
+
+    case 'hello':
+      Console.log(data);
+      res = 'world';
+      retVal.data = { success: true, data: res };
+      break;
+
+    default:
+      Console.log(`CMD: ${cmd}, DATA: ${data} is not supported yet (SYNC).`);
+      retVal.data = { success: false, errMsg: 'This command is not supported yet.' };
+      break;
+  }
+
+  event.returnValue = retVal;
+};
+
+/* This is to handle ASYNC commands */
+const handleDbAsyncCommands = async (event, arg) => {
+  const { cmd, data } = arg;
+  const retVal = {
+    cmd,
+    data: null,
+  };
+
+  let res = null;
+
+  switch (cmd) {
+    case 'reloadDb':
+      Console.log(data);
+      res = true;
+      retVal.data = { success: res, data: null };
+      break;
+
+    case 'hello':
+      Console.log(data);
+      res = 'world';
+      retVal.data = { success: true, data: res };
+      break;
+
+    default:
+      Console.log(`CMD: ${cmd}, DATA: ${data} is not supported yet (ASYNC).`);
+      retVal.data = { success: false, errMsg: 'This command is not supported yet.' };
+      break;
+  }
+  event.sender.send('db-async-command-resp', retVal);
+};
+
 const createWindow = async () => {
   /* Start connection to DB */
   mydb.connect();
 
-  /* Connect IPC */
-  ipc.on('asynchronous-message', (event, arg) => {
-    Console.log(arg);
-    event.sender.send('asynchronous-reply', 'world');
-  });
+  /* Connect IPCs */
+  /* Handle SYNC commands */
+  ipc.on('db-sync-command-req', handleDbSyncCommands);
+  /* Handle ASYNC commands */
+  ipc.on('db-async-command-req', handleDbAsyncCommands);
 
   // Create the browser window.
   mainWindow = new BrowserWindow({

@@ -13,7 +13,6 @@ import { Button, Icon, Container, Grid, Header, Menu, Segment, Label } from 'sem
 /* My components */
 // import './components/home';
 // import Home from './components/home';
-import DB from './components/db';
 
 /* Get dialog from electron */
 const { dialog } = electron.remote;
@@ -45,27 +44,6 @@ export default class App extends React.Component {
       dbDataFile: './db/sqdb.db',
     };
 
-    /* Create DB */
-    this.db = new DB();
-
-    // /* TRY SQLite test */
-    // this.db.connect();
-    // this.db.doSingleQuery(
-    //   "SELECT ID AS id, CATEGORY AS cat, QUESTION_DATA AS question, DIFFICULTY_LV AS lv, CREATED_DATE AS cd, LAST_UPDATED AS lu FROM 'QUESTIONS'",
-    //   (err, res) => {
-    //     if (err === null) {
-    //       Console.log(res);
-    //     } else {
-    //       Console.log(`SQL Error ${err}`);
-    //     }
-    //   },
-    // );
-    // this.db.disconnect();
-
-    /* Function bindings */
-    // this.updateSqlResult = this.updateSqlResult.bind(this);
-    // this.openDbFileFn = this.openDbFileFn.bind(this);
-
     /* Router target */
     this.HomePage = () => (
       <div>
@@ -75,18 +53,6 @@ export default class App extends React.Component {
           Hello World!
         </Button>
 
-        {/* Connect */}
-        <Button icon labelPosition="left" onClick={() => this.db.connect()}>
-          <Icon name="bolt" />
-          Connect DB
-        </Button>
-
-        {/* Disconnect */}
-        <Button icon labelPosition="left" onClick={() => this.db.disconnect()}>
-          <Icon name="x" />
-          Disconnect DB
-        </Button>
-
         {/* Add data */}
         <Button icon labelPosition="left" onClick={() => this.insertQuestion()}>
           <Icon name="add" />
@@ -94,7 +60,7 @@ export default class App extends React.Component {
         </Button>
 
         {/* IPC data */}
-        <Button icon labelPosition="left" onClick={() => this.sendReq()}>
+        <Button icon labelPosition="left" onClick={() => this.sendDbCmdAsync('hello')}>
           <Icon name="eye" />
           IPC test
         </Button>
@@ -142,22 +108,28 @@ export default class App extends React.Component {
 
       /* Need to update state? */
       if (filePath !== null) {
-        this.setState({ dbDataFile: filePath[0] });
+        this.setState({ dbDataFile: filePath[0] }, () => {
+          /* Automatically refresh DB cache */
+          this.reloadDb();
+        });
       }
-
-      /* Automatically refresh DB cache */
-      this.refreshDbCache();
     };
 
-    this.refreshDbCache = () => {
-      let dbCache = null;
+    /* Force to reload the database */
+    this.reloadDb = () => {
+      this.sendDbCmdAsync('reloadDb', {
+        newPath: this.state.dbDataFile,
+      });
+      Console.log('Reload DB requested!');
     };
 
     this.insertQuestion = () => {
-      const cat = { categories: [2] };
-      const qd = { q: 'Test Question', o: ['a', 'b', 'c', 'd'], a: ['a'] };
-      const dl = 5;
-      this.db.insertNewQuestion(JSON.stringify(cat), JSON.stringify(qd), dl);
+      const isOk = this.sendDbCmdSync('insertNew', {
+        cat: { categories: [2] },
+        qd: { q: 'Test Question', o: ['a', 'b', 'c', 'd'], a: ['a'] },
+        dl: 5,
+      });
+      Console.log(`Insert data is ${isOk ? 'OK!' : 'NOT OK!'}`);
     };
 
     // /* React Quill setup */
@@ -188,75 +160,47 @@ export default class App extends React.Component {
     //   'image',
     // ];
 
-    // /* Query database once */
-    // let sqdbStat = ''; // SQLite db status
-    // const mydb = new DB();
-    // mydb.connect();
-    // mydb.readAll(this.updateSqlResult);
+    /* IPC handlers */
+    this.handleIpcAsyncResp = (event, arg) => {
+      const { cmd, data } = arg;
 
-    // /* Try SQLite3 module */
-    // const mySqDb = new sqlite3.Database('./db/sqdb.db');
-    // this.sqdbStat = 'OK';
-    // mySqDb.serialize(function() {
-    //   mySqDb.run('CREATE TABLE lorem (info TEXT)');
-    //   let stmt = mySqDb.prepare('INSERT INTO lorem VALUES (?)', () => {
-    //     this.sqdbStat = 'SQL error!';
-    //   });
+      switch (cmd) {
+        case 'reloadDb':
+          if (data.success === true) {
+            Console.log('Reload DB succeeded');
+          } else {
+            Console.log(`Reload DB failed: ${data}`);
+          }
+          break;
 
-    //   for (let i = 0; i < 10; i++) {
-    //     stmt.run('Ipsum ' + i);
-    //   }
+        case 'hello':
+          Console.log(data);
+          break;
 
-    //   stmt.finalize();
-
-    //   mySqDb.each('SELECT rowid AS id, info FROM lorem', function(err, row) {
-    //     console.log(row.id + ': ' + row.info);
-    //   });
-    // });
-
-    // mySqDb.close();
-
-    /* Connect IPC */
-    this.sendReq = () => {
-      ipc.send('asynchronous-message', 'hello');
+        default:
+          Console.log(`CMD: ${cmd}, DATA: ${data} is not supported yet (ASYNC).`);
+          break;
+      }
     };
 
-    ipc.on('asynchronous-reply', (event, arg) => {
-      Console.log(arg);
-    });
+    /* Connect IPC */
+    /* Send SYNC command through IPC */
+    this.sendDbCmdSync = (dbCmd, paramObj = null) =>
+      ipc.sendSync('db-sync-command-req', { cmd: dbCmd, data: paramObj });
+
+    /* Send ASYNC command through IPC */
+    this.sendDbCmdAsync = (dbCmd, paramObj = null) =>
+      ipc.send('db-async-command-req', { cmd: dbCmd, data: paramObj });
+
+    /* Receive ASYNC response from IPC */
+    ipc.on('db-async-command-resp', this.handleIpcAsyncResp);
   }
 
   updateSqlResult(value) {
     this.setState({ tempdatas: value });
   }
 
-  // openDbFileFn() {
-  //   let filePath = null;
-  //   if (dialog !== null) {
-  //     filePath = dialog.showOpenDialog({
-  //       filters: [
-  //         { name: 'DB File', extensions: ['db'] },
-  //         { name: 'All Files', extensions: ['*'] },
-  //       ],
-  //       properties: ['openFile'],
-  //     });
-  //     if (filePath === undefined) {
-  //       filePath = null;
-  //     }
-  //   } else {
-  //     Console.log(`Error obtaining dialog object ${dialog}`);
-  //   }
-
-  //   if (filePath !== null) {
-  //     this.setState({ dbDataFile: filePath[0] });
-  //   }
-  // }
-
   render() {
-    // const mydb = new DB();
-    // mydb.connect();
-    // mydb.readAll(this.updateSqlResult);
-
     // /* Trial react table */
     // const testDataTbl = [
     //   { name: 'Lala', age: 20, friend: { name: 'lili', age: 23 } },
@@ -273,8 +217,6 @@ export default class App extends React.Component {
     //   { id: 'friendName', Header: 'Friend Name', accessor: d => d.friend.name },
     //   { Header: () => <span> Friend Age </span>, accessor: 'friend.age' },
     // ];
-
-    const { dbDataFile } = this.state.dbDataFile;
 
     return (
       <Router>
@@ -298,7 +240,7 @@ export default class App extends React.Component {
                     compact
                     labelPosition="right"
                     size="mini"
-                    onClick={() => this.refreshDbCache()}>
+                    onClick={() => this.reloadDb()}>
                     <Icon name="refresh" />
                     Refresh DB
                   </Button>

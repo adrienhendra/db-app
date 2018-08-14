@@ -11,6 +11,7 @@
     "react/jsx-closing-bracket-location": [1, {
       "selfClosing": "line-aligned",
       "nonEmpty": "after-props"
-    }]
+    }],
+    "no-param-reassign":["error", {"props": false}]
   }
 }
