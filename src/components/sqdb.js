@@ -21,6 +21,14 @@ export default class SQDB {
       connected: false,
       lastStatus: '',
     };
+
+    /* Bind methods */
+    this.connect = this.connect.bind(this);
+    this.disconnect = this.disconnect.bind(this);
+    this.doSingleQuery = this.doSingleQuery.bind(this);
+    this.updateCategoryList = this.updateCategoryList.bind(this);
+    this.updateQuestionList = this.updateQuestionList.bind(this);
+    this.insertNewQuestion = this.insertNewQuestion.bind(this);
   }
 
   connect(dbPath = './db/sqdb.db') {
@@ -79,6 +87,49 @@ export default class SQDB {
     return isOk;
   }
 
+  /* Application specific queries */
+  updateCategoryList() {
+    let isOk = false;
+    if (this.state.connected) {
+    } else {
+      Console.log('SQDB is not connected !!!');
+      isOk = false;
+    }
+    return isOk;
+  }
+
+  updateQuestionList() {
+    let isOk = false;
+    if (this.state.connected) {
+    } else {
+      Console.log('SQDB is not connected !!!');
+      isOk = false;
+    }
+    return isOk;
+  }
+
+  insertNewQuestion(category, questionData, difficultyLv) {
+    let isOk = false;
+    if (this.state.connected) {
+      /* Prepare statement */
+      this.connection.serialize(() => {
+        this.connection.run(
+          'INSERT INTO QUESTIONS (CATEGORY, QUESTION_DATA, DIFFICULTY_LV) VALUES($cat, $qd, $dl)',
+          {
+            $cat: category,
+            $qd: questionData,
+            $dl: difficultyLv,
+          },
+        );
+      });
+    } else {
+      Console.log('SQDB is not connected !!!');
+      isOk = false;
+    }
+    return isOk;
+  }
+
+  /* !!!!!!!!!!!!!!!!!!!!!!!!!!!! */
   readAll(callbackFn) {
     this.connection = null;
 

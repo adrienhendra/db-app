@@ -1,10 +1,22 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import installExtension, { REACT_DEVELOPER_TOOLS } from 'electron-devtools-installer';
 import { enableLiveReload } from 'electron-compile';
+
+/* My database component */
+import DB from './components/db';
 
 /* Required for squirrel, maybe? */
 // if (require('electron-squirrel-startup')) app.quit();
 const squi = require('electron-squirrel-startup');
+
+/* My database */
+const mydb = new DB();
+
+/* My IPC */
+const ipc = ipcMain;
+
+/* Console alias */
+const Console = console;
 
 /* Required just to create desktop shortcut ? */
 if (squi) app.quit();
@@ -18,6 +30,15 @@ const isDevMode = process.execPath.match(/[\\/]electron/);
 if (isDevMode) enableLiveReload({ strategy: 'react-hmr' });
 
 const createWindow = async () => {
+  /* Start connection to DB */
+  mydb.connect();
+
+  /* Connect IPC */
+  ipc.on('asynchronous-message', (event, arg) => {
+    Console.log(arg);
+    event.sender.send('asynchronous-reply', 'world');
+  });
+
   // Create the browser window.
   mainWindow = new BrowserWindow({
     width: 1280,
@@ -50,6 +71,9 @@ app.on('ready', createWindow);
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
+  /* End connection to DB */
+  mydb.disconnect();
+
   // On OS X it is common for applications and their menu bar
   // to stay active until the user quits explicitly with Cmd + Q
   if (process.platform !== 'darwin') {

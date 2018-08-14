@@ -1,7 +1,8 @@
+/* React */
 import React from 'react';
 
-/* Import electron components */
-import electron from 'electron';
+/* Electrons */
+import electron, { ipcRenderer } from 'electron';
 
 /* React router components */
 import { HashRouter as Router, Route, NavLink } from 'react-router-dom';
@@ -17,6 +18,9 @@ import DB from './components/db';
 /* Get dialog from electron */
 const { dialog } = electron.remote;
 
+/* My IPC */
+const ipc = ipcRenderer;
+
 /* Alias for my console debug */
 const Console = console;
 
@@ -25,12 +29,6 @@ const Console = console;
 
 /* React table */
 // import ReactTable from 'react-table';
-
-/* SQLite3 */
-// import sqlite3 from 'sqlite3';
-
-/* DB common lib */
-// import DB from './components/db';
 
 export default class App extends React.Component {
   constructor(props) {
@@ -50,19 +48,19 @@ export default class App extends React.Component {
     /* Create DB */
     this.db = new DB();
 
-    /* TRY SQLite test */
-    this.db.connect();
-    this.db.doSingleQuery(
-      "SELECT ID AS id, CATEGORY AS cat, QUESTION_DATA AS question, DIFFICULTY_LV AS lv, CREATED_DATE AS cd, LAST_UPDATED AS lu FROM 'QUESTIONS'",
-      (err, res) => {
-        if (err === null) {
-          Console.log(res);
-        } else {
-          Console.log(`SQL Error ${err}`);
-        }
-      },
-    );
-    this.db.disconnect();
+    // /* TRY SQLite test */
+    // this.db.connect();
+    // this.db.doSingleQuery(
+    //   "SELECT ID AS id, CATEGORY AS cat, QUESTION_DATA AS question, DIFFICULTY_LV AS lv, CREATED_DATE AS cd, LAST_UPDATED AS lu FROM 'QUESTIONS'",
+    //   (err, res) => {
+    //     if (err === null) {
+    //       Console.log(res);
+    //     } else {
+    //       Console.log(`SQL Error ${err}`);
+    //     }
+    //   },
+    // );
+    // this.db.disconnect();
 
     /* Function bindings */
     // this.updateSqlResult = this.updateSqlResult.bind(this);
@@ -75,6 +73,30 @@ export default class App extends React.Component {
         <Button icon labelPosition="left" onClick={() => this.openDbFileFn()}>
           <Icon name="pause" />
           Hello World!
+        </Button>
+
+        {/* Connect */}
+        <Button icon labelPosition="left" onClick={() => this.db.connect()}>
+          <Icon name="bolt" />
+          Connect DB
+        </Button>
+
+        {/* Disconnect */}
+        <Button icon labelPosition="left" onClick={() => this.db.disconnect()}>
+          <Icon name="x" />
+          Disconnect DB
+        </Button>
+
+        {/* Add data */}
+        <Button icon labelPosition="left" onClick={() => this.insertQuestion()}>
+          <Icon name="add" />
+          Insert data
+        </Button>
+
+        {/* IPC data */}
+        <Button icon labelPosition="left" onClick={() => this.sendReq()}>
+          <Icon name="eye" />
+          IPC test
         </Button>
       </div>
     );
@@ -129,6 +151,13 @@ export default class App extends React.Component {
 
     this.refreshDbCache = () => {
       let dbCache = null;
+    };
+
+    this.insertQuestion = () => {
+      const cat = { categories: [2] };
+      const qd = { q: 'Test Question', o: ['a', 'b', 'c', 'd'], a: ['a'] };
+      const dl = 5;
+      this.db.insertNewQuestion(JSON.stringify(cat), JSON.stringify(qd), dl);
     };
 
     // /* React Quill setup */
@@ -186,6 +215,15 @@ export default class App extends React.Component {
     // });
 
     // mySqDb.close();
+
+    /* Connect IPC */
+    this.sendReq = () => {
+      ipc.send('asynchronous-message', 'hello');
+    };
+
+    ipc.on('asynchronous-reply', (event, arg) => {
+      Console.log(arg);
+    });
   }
 
   updateSqlResult(value) {
