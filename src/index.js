@@ -87,10 +87,29 @@ const handleDbAsyncCommands = async (event, arg) => {
 
   switch (cmd) {
     case 'reloadDb':
-      Console.log(data);
-      res = true;
-      retVal.errMsg = null;
-      retVal.data = { success: res, data: null };
+      try {
+        // Console.log(data);
+        res = await mydb.reloadDb(data.newPath);
+        retVal.errMsg = null;
+        retVal.data = { success: res.success, data: null };
+      } catch (err) {
+        // Console.log(err);
+        retVal.errMsg = err.errMsg;
+        retVal.data = { success: err.success, data: err.data };
+      }
+      break;
+
+    case 'getStatus':
+      try {
+        Console.log(data);
+        res = await mydb.getStatus();
+        retVal.errMsg = res.errMsg;
+        retVal.data = { success: res.success, data: res.data };
+      } catch (err) {
+        Console.log(err);
+        retVal.errMsg = err.errMsg;
+        retVal.data = { success: err.success, data: err.data };
+      }
       break;
 
     case 'hello':
@@ -110,8 +129,12 @@ const handleDbAsyncCommands = async (event, arg) => {
 };
 
 const createWindow = async () => {
-  /* Start connection to DB */
-  mydb.connect();
+  try {
+    /* Start connection to DB */
+    await mydb.connect();
+  } catch (err) {
+    Console.log(`Cannot connect to database: ${err.errMsg}, ${err.data}`);
+  }
 
   /* Connect IPCs */
   /* Handle SYNC commands */
@@ -150,9 +173,16 @@ const createWindow = async () => {
 app.on('ready', createWindow);
 
 // Quit when all windows are closed.
-app.on('window-all-closed', () => {
+app.on('window-all-closed', async () => {
   /* End connection to DB */
-  mydb.disconnect();
+  // mydb.disconnect();
+
+  try {
+    /* End connection to DB */
+    await mydb.disconnect();
+  } catch (err) {
+    Console.log(`Cannot disconnect database: ${err.errMsg}, ${err.data}`);
+  }
 
   // On OS X it is common for applications and their menu bar
   // to stay active until the user quits explicitly with Cmd + Q

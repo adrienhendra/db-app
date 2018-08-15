@@ -19,53 +19,110 @@ export default class SQDB {
     /* Object state */
     this.state = {
       connected: false,
-      lastStatus: '',
     };
 
-    /* Bind methods */
-    // this.connect = this.connect.bind(this);
-    // this.disconnect = this.disconnect.bind(this);
-    // this.doSingleQuery = this.doSingleQuery.bind(this);
-    // this.updateCategoryList = this.updateCategoryList.bind(this);
-    // this.updateQuestionList = this.updateQuestionList.bind(this);
-    // this.insertNewQuestion = this.insertNewQuestion.bind(this);
+    /* Get DB status */
+    this.getStatus = () =>
+      new Promise((resolve) => {
+        const retVal = { success: false, errMsg: null, data: null };
+        const { connected } = this.state;
+        retVal.success = true;
+        retVal.errMsg = null;
+        retVal.data = {
+          connected,
+        };
+        resolve(retVal);
+      });
 
-    this.connect = (dbPath = './db/sqdb.db') => {
-      if (!this.state.connected) {
-        if (fs.existsSync(dbPath)) {
-          Console.log(`DB file (${dbPath}) exists`);
-          this.state.connected = true;
+    /* Connect to SQLite DB */
+    this.connect = (dbPath = './db/sqdb.db') =>
+      new Promise((resolve, reject) => {
+        let activeDbPath = dbPath;
+        const retVal = { success: false, errMsg: null, data: null };
+
+        if (!this.state.connected) {
+          if (fs.existsSync(activeDbPath)) {
+            Console.log(`DB file (${activeDbPath}) exists`);
+          } else {
+            Console.log(`DB file (${activeDbPath}) doesn't exists. Using default DB.`);
+            activeDbPath = './db/sqdb.db';
+          }
+
+          /* Connect to db */
+          this.connection = new sqlite3.Database(activeDbPath, (err) => {
+            if (err !== null) {
+              /* Error */
+              Console.log(`SQDB connect error: ${err}`);
+              Console.log('SQDB not yet connected !!!');
+
+              retVal.success = false;
+              retVal.errMsg = `SQDB error code: ${err.name}, ${err.message}`;
+              reject(retVal);
+            } else {
+              /* Good? Now check simple query to see if this is correct DB file */
+              this.connection.run(
+                'SELECT VERSION_HISTORY AS ver FROM META WHERE ID=(SELECT MAX(ID) FROM META)',
+                (err2) => {
+                  if (err2 !== null) {
+                    Console.log(`SQDB most likely not database file: ${err2}`);
+                    retVal.success = false;
+                    retVal.errMsg = `SQDB error code: ${err2.name}, ${err2.message}`;
+                    reject(retVal);
+                  } else {
+                    Console.log(`Valid database file ${activeDbPath}.`);
+
+                    /* Set pragmas */
+                    this.connection.run('PRAGMA foreign_keys = ON');
+
+                    /* Assume it is already connected */
+                    this.state.connected = true;
+
+                    Console.log('SQDB connected !!!');
+
+                    retVal.success = true;
+                    retVal.errMsg = null;
+                    resolve(retVal);
+                  }
+                },
+              );
+            }
+          });
         } else {
-          Console.log(`DB file (${dbPath}) doesn't exists`);
-          this.state.connected = false;
+          Console.log('SQDB is already connected !!!');
+          retVal.success = false;
+          retVal.errMsg = 'SQDB is already connected!';
+          resolve(retVal);
         }
+      });
 
-        /* Connect to db */
-        this.connection = new sqlite3.Database(dbPath);
-        this.state.lastStatus = 'OK';
-
-        /* Set pragmas */
-        this.connection.run('PRAGMA foreign_keys = ON');
-
-        Console.log('SQDB connected !!!');
-      } else {
-        Console.log('SQDB is already connected !!!');
-      }
-      return this.state.connected;
-    };
-
-    this.disconnect = () => {
-      if (this.state.connected) {
-        /* Disconnect */
-        this.connection.close((err) => {
-          this.state.lastStatus = err;
-        });
-        this.state.connected = false;
-        Console.log('SQDB disconnected !!!');
-      } else {
-        Console.log('SQDB is not connected !!!');
-      }
-    };
+    /* Disconnect from SQLite DB */
+    this.disconnect = () =>
+      new Promise((resolve, reject) => {
+        const retVal = { success: false, errMsg: null, data: null };
+        if (this.state.connected) {
+          /* Disconnect */
+          this.connection.close((err) => {
+            if (err !== null) {
+              Console.log(`SQDB disconnect error: ${err}`);
+              retVal.success = false;
+              retVal.errMsg = `SQDB error code: ${err.name}, ${err.message}`;
+              reject(retVal);
+            } else {
+              Console.log('SQDB disconnected!');
+              retVal.success = true;
+              retVal.errMsg = null;
+              resolve(retVal);
+            }
+          });
+          /* Force to disconnected state */
+          this.state.connected = false;
+        } else {
+          Console.log('SQDB is not connected !!!');
+          retVal.success = false;
+          retVal.errMsg = 'SQDB is not connected!';
+          resolve(retVal);
+        }
+      });
 
     /* Main query function */
     this.doSingleQuery = (sqlStatement, callbackFn = null) => {

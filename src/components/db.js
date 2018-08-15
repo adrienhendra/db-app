@@ -21,29 +21,60 @@ export default class DB {
       lastQuestionList: null,
     };
 
+    /* Set special DB parameters */
     this.setDbParam = (dbPath) => {
       this.dbConnParam = { type: 'sqlite3', path: dbPath };
+      Console.log(this.dbConnParam);
     };
 
-    this.connect = () => {
+    /* Get DB status */
+    this.getStatus = async () => {
+      const res = await this.dbConn.getStatus();
+      return res;
+    };
+
+    /* Connect to DB */
+    this.connect = async () => {
       const dbParam = this.dbConnParam;
+      let res = null;
       if (dbParam !== null) {
         if (dbParam.type === 'sqlite3') {
-          this.dbConn.connect(dbParam);
+          res = await this.dbConn.connect(dbParam.path);
         } else {
           Console.log(`DB ${dbParam.type} is not supported yet. Defaults to SQLite3`);
           /* Defaults to local SQLITE DB */
-          this.dbConn.connect();
+          res = await this.dbConn.connect();
         }
       } else {
         /* Defaults to local SQLITE DB */
         Console.log('DB no param supplied. Defaults to SQLite3');
-        this.dbConn.connect();
+        res = await this.dbConn.connect();
       }
+
+      return res;
     };
 
-    this.disconnect = () => {
-      this.dbConn.disconnect();
+    /* Disconnect from DB */
+    this.disconnect = async () => {
+      const res = this.dbConn.disconnect();
+      return res;
+    };
+
+    /* Reload DB */
+    this.reloadDb = async (dbPath) => {
+      let res = null;
+      /* Disconnect from DB if it is already connected */
+      if (this.dbConn !== null) {
+        res = await this.disconnect();
+      }
+
+      /* Update DB path */
+      this.setDbParam(dbPath);
+
+      /* Reconnect DB with new file */
+      res = await this.connect();
+
+      return res;
     };
 
     /* Common SQL functions here */

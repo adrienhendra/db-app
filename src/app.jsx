@@ -20,6 +20,9 @@ import {
   Dropdown,
 } from 'semantic-ui-react';
 
+/* React table */
+import ReactTable from 'react-table';
+
 /* My components */
 // import './components/home';
 // import Home from './components/home';
@@ -36,9 +39,6 @@ const Console = console;
 /* React Quill */
 // import ReactQuill from 'react-quill';
 
-/* React table */
-// import ReactTable from 'react-table';
-
 export default class App extends React.Component {
   constructor(props) {
     super(props);
@@ -52,6 +52,8 @@ export default class App extends React.Component {
       },
       tempdatas: [],
       dbDataFile: './db/sqdb.db',
+      dbStatus: -1,
+      pageLoading: false,
     };
 
     /* Router target */
@@ -76,6 +78,27 @@ export default class App extends React.Component {
         </Button>
       </div>
     );
+
+    this.ViewPage = () => {
+      /* TODO: Fetch data from DB */
+
+      /* Create dummy table data */
+      const testDataTbl = [
+        { name: 'Lala', age: 20, friend: { name: 'lili', age: 23 } },
+        { name: 'Lulu', age: 12, friend: { name: 'lele', age: 24 } },
+      ];
+      const testDataCols = [
+        { Header: 'Name', accessor: 'name' },
+        {
+          Header: 'Age',
+          accessor: 'age',
+          Cell: (p) => <span className="number">{p.value}</span>,
+        },
+        { id: 'friendName', Header: 'Friend Name', accessor: (d) => d.friend.name },
+        { Header: () => <span> Friend Age </span>, accessor: 'friend.age' },
+      ];
+      return <ReactTable data={testDataTbl} columns={testDataCols} />;
+    };
 
     this.CreatePage = () => {
       const dataOptions = [
@@ -198,6 +221,23 @@ export default class App extends React.Component {
           } else {
             Console.log(`Reload DB failed: ${errMsg}, data: ${data}`);
           }
+          /* Auto request for status */
+          this.sendDbCmdAsync('getStatus');
+          break;
+
+        case 'getStatus':
+          if (data.success === true) {
+            Console.log('Get DB status succeeded');
+            Console.log(`DB status: ${data.data.connected}`);
+            if (data.data.connected === true) {
+              this.setState({ dbStatus: 1 });
+            } else {
+              this.setState({ dbStatus: 0 });
+            }
+          } else {
+            Console.log(`Get DB status failed: ${errMsg}, data: ${data}`);
+            this.setState({ dbStatus: -1 });
+          }
           break;
 
         case 'hello':
@@ -225,6 +265,10 @@ export default class App extends React.Component {
 
     /* Receive ASYNC response from IPC */
     ipc.on('db-async-command-resp', this.handleIpcAsyncResp);
+
+    /* End of constructor */
+    /* Auto request for status */
+    this.sendDbCmdAsync('getStatus');
   }
 
   updateSqlResult(value) {
@@ -232,22 +276,20 @@ export default class App extends React.Component {
   }
 
   render() {
-    // /* Trial react table */
-    // const testDataTbl = [
-    //   { name: 'Lala', age: 20, friend: { name: 'lili', age: 23 } },
-    //   { name: 'Lulu', age: 12, friend: { name: 'lele', age: 24 } },
-    // ];
+    const { dbDataFile, dbStatus, pageLoading } = this.state;
+    /* Calculate status color */
+    let dbStatusColor = 'yellow'; // Assume unknown
 
-    // const testDataCols = [
-    //   { Header: 'Name', accessor: 'name' },
-    //   {
-    //     Header: 'Age',
-    //     accessor: 'age',
-    //     Cell: props => <span className="number">{props.value}</span>,
-    //   },
-    //   { id: 'friendName', Header: 'Friend Name', accessor: d => d.friend.name },
-    //   { Header: () => <span> Friend Age </span>, accessor: 'friend.age' },
-    // ];
+    if (dbStatus === 0) {
+      /* Not connected */
+      dbStatusColor = 'red';
+    } else if (dbStatus === 1) {
+      /* Connected */
+      dbStatusColor = 'green';
+    } else {
+      /* Unknown */
+      dbStatusColor = 'yellow';
+    }
 
     return (
       <Router>
@@ -261,8 +303,9 @@ export default class App extends React.Component {
                 <Container>
                   <Label size="medium">Select active database:</Label>
                   <Label size="medium" color="teal" onClick={() => this.openDbFileFn()}>
-                    {this.state.dbDataFile}
+                    {dbDataFile}
                   </Label>
+                  <Icon name="circle" color={dbStatusColor} />
                 </Container>
                 <br />
                 <Container>
@@ -283,6 +326,7 @@ export default class App extends React.Component {
             <Grid.Column width={2}>
               <Menu fluid vertical tabular>
                 <Menu.Item name="home" as={NavLink} exact to="/" />
+                <Menu.Item name="view" as={NavLink} to="/view" />
                 <Menu.Item name="create" as={NavLink} to="/create" />
                 <Menu.Item name="update" as={NavLink} to="/update" />
                 <Menu.Item name="delete" as={NavLink} to="/delete" />
@@ -298,9 +342,9 @@ export default class App extends React.Component {
                   </Button>
                   <Container>
                     <div>
-                      <Icon loading name="spinner" />
-                      <Icon loading name="certificate" />
-                      <Icon loading name="asterisk" />
+                      <Icon loading={pageLoading} name="spinner" />
+                      <Icon loading={pageLoading} name="certificate" />
+                      <Icon loading={pageLoading} name="asterisk" />
                     </div>
                   </Container>
                   <Container>{/* <Home /> */}</Container>
@@ -308,6 +352,7 @@ export default class App extends React.Component {
               </Segment>
               <Segment basic className="App-content">
                 <Route exact path="/" component={this.HomePage} />
+                <Route path="/view" component={this.ViewPage} />
                 <Route path="/create" component={this.CreatePage} />
                 <Route path="/update" component={this.UpdatePage} />
                 <Route path="/delete" component={this.DeletePage} />
