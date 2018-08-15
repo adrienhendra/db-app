@@ -46,13 +46,9 @@ export default class App extends React.Component {
     /* This state */
     this.state = {
       text: '', // You can also pass a Quill Delta here
-      data: {
-        rating: 0,
-        lastUpdate: 'unknown',
-      },
-      tempdatas: [],
       dbDataFile: './db/sqdb.db',
       dbStatus: -1,
+      dbDataRows: [],
       pageLoading: false,
     };
 
@@ -80,24 +76,56 @@ export default class App extends React.Component {
     );
 
     this.ViewPage = () => {
-      /* TODO: Fetch data from DB */
-
-      /* Create dummy table data */
-      const testDataTbl = [
-        { name: 'Lala', age: 20, friend: { name: 'lili', age: 23 } },
-        { name: 'Lulu', age: 12, friend: { name: 'lele', age: 24 } },
-      ];
-      const testDataCols = [
-        { Header: 'Name', accessor: 'name' },
+      /* Get data rows */
+      const { dbDataRows } = this.state;
+      const dbHeader = [
+        { Header: 'ID', accessor: 'ID' },
+        { Header: 'Category', accessor: 'CATEGORY' },
         {
-          Header: 'Age',
-          accessor: 'age',
-          Cell: (p) => <span className="number">{p.value}</span>,
+          Header: 'Questions',
+          accessor: 'QUESTION_DATA',
+          Cell: (p) => {
+            const { q, o, a } = p.value;
+            return (
+              <div>
+                <div>{`Q: ${q}`}</div>
+                <div>{`O: ${o}`}</div>
+                <div>{`A: ${a}`}</div>
+              </div>
+            );
+          },
         },
-        { id: 'friendName', Header: 'Friend Name', accessor: (d) => d.friend.name },
-        { Header: () => <span> Friend Age </span>, accessor: 'friend.age' },
+        { Header: 'Level', accessor: 'DIFFICULTY_LV' },
+        { Header: 'Created date', accessor: 'CREATED_DATE' },
+        { Header: 'Last updated', accessor: 'LAST_UPDATED' },
       ];
-      return <ReactTable data={testDataTbl} columns={testDataCols} />;
+
+      return (
+        <div>
+          <Segment>
+            <Button
+              icon
+              labelPosition="left"
+              size="mini"
+              onClick={() => {
+                /* Fetch data from DB */
+                this.sendDbCmdAsync('getQuestionList');
+              }}>
+              <Icon name="refresh" />
+              Update table
+            </Button>
+          </Segment>
+          <Segment>
+            {/* <ReactTable data={testDataTbl} columns={testDataCols} /> */}
+            <ReactTable
+              data={dbDataRows}
+              columns={dbHeader}
+              defaultPageSize={10}
+              className="-striped -highlight"
+            />
+          </Segment>
+        </div>
+      );
     };
 
     this.CreatePage = () => {
@@ -240,6 +268,15 @@ export default class App extends React.Component {
           }
           break;
 
+        case 'getQuestionList':
+          if (data.success === true) {
+            Console.log('Get question list succeeded');
+            this.setState({ dbDataRows: data.data });
+          } else {
+            Console.log(`Get question list failed: ${errMsg}, data: ${data}`);
+          }
+          break;
+
         case 'hello':
           Console.log(data);
           break;
@@ -266,13 +303,21 @@ export default class App extends React.Component {
     /* Receive ASYNC response from IPC */
     ipc.on('db-async-command-resp', this.handleIpcAsyncResp);
 
-    /* End of constructor */
-    /* Auto request for status */
-    this.sendDbCmdAsync('getStatus');
-  }
+    /* Watchdog */
+    this.watchdog = () => {
+      this.sendDbCmdAsync('getStatus');
+    };
 
-  updateSqlResult(value) {
-    this.setState({ tempdatas: value });
+    /* Auto request for status, every 30 seconds */
+    setInterval(this.watchdog, 30000);
+
+    /* Update watchdog once */
+    this.watchdog();
+
+    /* Fetch and populate data from DB */
+    this.sendDbCmdAsync('getQuestionList');
+
+    /* End of constructor */
   }
 
   render() {
@@ -295,11 +340,9 @@ export default class App extends React.Component {
       <Router>
         <Grid>
           <Grid.Row centered columns={1}>
-            <Header>Soepriatna DB App</Header>
-          </Grid.Row>
-          <Grid.Row centered columns={1}>
             <Grid.Column width={16}>
               <Segment textAlign="center">
+                <Header>Database control</Header>
                 <Container>
                   <Label size="medium">Select active database:</Label>
                   <Label size="medium" color="teal" onClick={() => this.openDbFileFn()}>
@@ -333,23 +376,6 @@ export default class App extends React.Component {
               </Menu>
             </Grid.Column>
             <Grid.Column width={14}>
-              <Segment>
-                <div>
-                  <h2>Welcome to React!</h2>
-                  <Button icon labelPosition="left" onClick={() => this.openDbFileFn()}>
-                    <Icon name="pause" />
-                    Hello World!
-                  </Button>
-                  <Container>
-                    <div>
-                      <Icon loading={pageLoading} name="spinner" />
-                      <Icon loading={pageLoading} name="certificate" />
-                      <Icon loading={pageLoading} name="asterisk" />
-                    </div>
-                  </Container>
-                  <Container>{/* <Home /> */}</Container>
-                </div>
-              </Segment>
               <Segment basic className="App-content">
                 <Route exact path="/" component={this.HomePage} />
                 <Route path="/view" component={this.ViewPage} />

@@ -16,9 +16,9 @@ export default class DB {
     Console.log('DB constructed!');
     this.dbConn = new MYDB();
     this.dbConnParam = null;
+
     this.state = {
       lastCatList: null,
-      lastQuestionList: null,
     };
 
     /* Set special DB parameters */
@@ -92,8 +92,14 @@ export default class DB {
       this.state.lastCatList = null;
     };
 
-    this.updateQuestionList = () => {
-      this.state.lastQuestionList = null;
+    this.getQuestionList = async () => {
+      if (this.dbConn === null) {
+        return null;
+      }
+
+      /* Connection is valid */
+      const res = await this.dbConn.getQuestionList();
+      return res;
     };
 
     this.insertNewQuestion = async (category, questionData, difficultyLv) => {

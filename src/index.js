@@ -101,12 +101,26 @@ const handleDbAsyncCommands = async (event, arg) => {
 
     case 'getStatus':
       try {
-        Console.log(data);
+        // Console.log(data);
         res = await mydb.getStatus();
         retVal.errMsg = res.errMsg;
         retVal.data = { success: res.success, data: res.data };
       } catch (err) {
-        Console.log(err);
+        // Console.log(err);
+        retVal.errMsg = err.errMsg;
+        retVal.data = { success: err.success, data: err.data };
+      }
+      break;
+
+    case 'getQuestionList':
+      try {
+        // Console.log(data);
+        res = await mydb.getQuestionList();
+        // Console.log(res);
+        retVal.errMsg = res.errMsg;
+        retVal.data = { success: res.success, data: res.data };
+      } catch (err) {
+        // Console.log(err);
         retVal.errMsg = err.errMsg;
         retVal.data = { success: err.success, data: err.data };
       }
@@ -146,7 +160,11 @@ const createWindow = async () => {
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 960,
+    minWidth: 1280,
+    minHeight: 960,
     frame: true,
+    title: 'Soepriatna DB App',
+    useContentSize: false,
   });
 
   // and load the index.html of the app.

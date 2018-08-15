@@ -158,16 +158,49 @@ export default class SQDB {
       return isOk;
     };
 
-    this.updateQuestionList = () => {
-      let isOk = false;
-      if (this.state.connected) {
-        Console.log('updateQuestionList: TODO!');
-      } else {
-        Console.log('SQDB is not connected !!!');
-        isOk = false;
-      }
-      return isOk;
-    };
+    this.getQuestionList = () =>
+      new Promise((resolve, reject) => {
+        const retVal = { success: false, errMsg: null, data: null };
+        if (this.state.connected) {
+          /* Prepare statement */
+          this.connection.serialize(() => {
+            /* Run */
+            this.connection.all('SELECT * FROM QUESTIONS', {}, (err, rows) => {
+              if (err !== null) {
+                Console.log(`SQDB error, cannot get question list: ${err}`);
+                retVal.success = false;
+                retVal.errMsg = `SQDB error code: ${err.name}, ${err.message}`;
+                reject(retVal);
+              } else {
+                Console.log('SQDB get question list OK!');
+                retVal.success = true;
+                retVal.errMsg = null;
+
+                /* Convert to proper array of object here */
+                const dataRows = [];
+                rows.forEach((v) => {
+                  const rowObj = {
+                    ID: v.ID,
+                    CATEGORY: v.CATEGORY,
+                    QUESTION_DATA: JSON.parse(v.QUESTION_DATA),
+                    DIFFICULTY_LV: v.DIFFICULTY_LV,
+                    CREATED_DATE: v.CREATED_DATE,
+                    LAST_UPDATED: v.LAST_UPDATED,
+                  };
+                  dataRows.push(rowObj);
+                });
+                retVal.data = dataRows;
+                resolve(retVal);
+              }
+            });
+          });
+        } else {
+          Console.log('SQDB is not connected!');
+          retVal.success = false;
+          retVal.errMsg = 'SQDB is not connected!';
+          reject(retVal);
+        }
+      });
 
     this.insertNewQuestion = (category, questionData, difficultyLv) =>
       new Promise((resolve, reject) => {
@@ -185,7 +218,7 @@ export default class SQDB {
               },
               (err) => {
                 if (err !== null) {
-                  Console.log(`SQDB error: ${err}`);
+                  Console.log(`SQDB error, cannot insert new question: ${err}`);
                   retVal.success = false;
                   retVal.errMsg = `SQDB error code: ${err.name}, ${err.message}`;
                   reject(retVal);
