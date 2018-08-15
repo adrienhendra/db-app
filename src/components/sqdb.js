@@ -6,6 +6,8 @@ import fs from 'fs';
 /* Load SQLite3 module */
 import sqlite3 from 'sqlite3';
 
+import path from 'path';
+
 /* Alias for my console debug */
 const Console = console;
 
@@ -15,6 +17,10 @@ export default class SQDB {
 
     /* Init */
     this.connection = null;
+
+    this.defDbPath = path.resolve(__dirname, '../..', 'db', 'sqdb.db');
+
+    Console.log(`db file path: ${this.defDbPath}`);
 
     /* Object state */
     this.state = {
@@ -35,7 +41,8 @@ export default class SQDB {
       });
 
     /* Connect to SQLite DB */
-    this.connect = (dbPath = './db/sqdb.db') =>
+    // this.connect = (dbPath = './db/sqdb.db') =>
+    this.connect = (dbPath = this.defDbPath) =>
       new Promise((resolve, reject) => {
         let activeDbPath = dbPath;
         const retVal = { success: false, errMsg: null, data: null };
@@ -45,7 +52,8 @@ export default class SQDB {
             Console.log(`DB file (${activeDbPath}) exists`);
           } else {
             Console.log(`DB file (${activeDbPath}) doesn't exists. Using default DB.`);
-            activeDbPath = './db/sqdb.db';
+            // activeDbPath = './db/sqdb.db';
+            activeDbPath = this.defDbPath;
           }
 
           /* Connect to db */

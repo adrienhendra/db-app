@@ -50,6 +50,7 @@ export default class App extends React.Component {
       dbStatus: -1,
       dbDataRows: [],
       pageLoading: false,
+      qListLoading: false,
     };
 
     /* Router target */
@@ -77,7 +78,7 @@ export default class App extends React.Component {
 
     this.ViewPage = () => {
       /* Get data rows */
-      const { dbDataRows } = this.state;
+      const { dbDataRows, qListLoading } = this.state;
       const dbHeader = [
         { Header: 'ID', accessor: 'ID' },
         { Header: 'Category', accessor: 'CATEGORY' },
@@ -109,7 +110,7 @@ export default class App extends React.Component {
               size="mini"
               onClick={() => {
                 /* Fetch data from DB */
-                this.sendDbCmdAsync('getQuestionList');
+                this.sendGetQList();
               }}>
               <Icon name="refresh" />
               Update table
@@ -121,6 +122,7 @@ export default class App extends React.Component {
               data={dbDataRows}
               columns={dbHeader}
               defaultPageSize={10}
+              loading={qListLoading}
               className="-striped -highlight"
             />
           </Segment>
@@ -204,10 +206,19 @@ export default class App extends React.Component {
       if (cmd === 'insertNew' && data !== null) {
         if (data.success === true) {
           Console.log('Insert data succeeded!');
+          /* Auto refresh question list */
+          this.sendGetQList();
         } else {
           Console.log(`Insert data failed: ${errMsg}, data: ${data}`);
         }
       }
+    };
+
+    /* Helper functions */
+    this.sendGetQList = () => {
+      /* Set loading status */
+      this.setState({ qListLoading: true });
+      this.sendDbCmdAsync('getQuestionList');
     };
 
     // /* React Quill setup */
@@ -251,12 +262,15 @@ export default class App extends React.Component {
           }
           /* Auto request for status */
           this.sendDbCmdAsync('getStatus');
+
+          /* Auto refresh last question list from DB */
+          this.sendGetQList();
           break;
 
         case 'getStatus':
           if (data.success === true) {
-            Console.log('Get DB status succeeded');
-            Console.log(`DB status: ${data.data.connected}`);
+            // Console.log('Get DB status succeeded');
+            // Console.log(`DB status: ${data.data.connected}`);
             if (data.data.connected === true) {
               this.setState({ dbStatus: 1 });
             } else {
@@ -270,10 +284,11 @@ export default class App extends React.Component {
 
         case 'getQuestionList':
           if (data.success === true) {
-            Console.log('Get question list succeeded');
-            this.setState({ dbDataRows: data.data });
+            // Console.log('Get question list succeeded');
+            this.setState({ dbDataRows: data.data, qListLoading: false });
           } else {
             Console.log(`Get question list failed: ${errMsg}, data: ${data}`);
+            this.setState({ dbDataRows: [], qListLoading: true });
           }
           break;
 
@@ -314,7 +329,7 @@ export default class App extends React.Component {
     /* Update watchdog once */
     this.watchdog();
 
-    /* Fetch and populate data from DB */
+    /* Force to fetch and populate data from DB */
     this.sendDbCmdAsync('getQuestionList');
 
     /* End of constructor */
