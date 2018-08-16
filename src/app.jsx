@@ -143,7 +143,7 @@ export default class App extends React.Component {
         {
           Header: 'Update',
           accessor: 'ID',
-          Cell: (p) => this.showEdit2(p.value),
+          Cell: (p) => this.showEdit(p.value),
         },
       ];
 
