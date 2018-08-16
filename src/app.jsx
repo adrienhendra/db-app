@@ -18,6 +18,8 @@ import {
   Segment,
   Label,
   Dropdown,
+  Rating,
+  Modal,
 } from 'semantic-ui-react';
 
 /* React table */
@@ -57,30 +59,65 @@ export default class App extends React.Component {
     this.HomePage = () => (
       <div>
         <p>This is home</p>
-        <Button icon labelPosition="left" onClick={() => this.openDbFileFn()}>
+        <Button icon labelPosition="right" onClick={() => this.openDbFileFn()}>
           <Icon name="pause" />
           Hello World!
         </Button>
 
         {/* Add data */}
-        <Button icon labelPosition="left" onClick={() => this.insertQuestion()}>
+        <Button icon labelPosition="right" onClick={() => this.insertQuestion()}>
           <Icon name="add" />
           Insert data
         </Button>
 
         {/* IPC data */}
-        <Button icon labelPosition="left" onClick={() => this.sendDbCmdAsync('hello')}>
+        <Button icon labelPosition="right" onClick={() => this.sendDbCmdAsync('hello')}>
           <Icon name="eye" />
           IPC test
         </Button>
       </div>
     );
 
+    this.showEdit = (row) => {
+      const { dbDataRows } = this.state;
+      return (
+        <div>
+          <Button
+            size="mini"
+            onClick={() => {
+              const drIdx = dbDataRows.findIndex((x) => x.ID === row);
+              const datarow = dbDataRows[drIdx];
+              dialog.showMessageBox({ message: `Editing ID: ${JSON.stringify(datarow)}` });
+            }}>
+            {`Edit Q-${row}`}
+          </Button>
+        </div>
+      );
+    };
+
+    this.showEdit2 = (row) => {
+      const { dbDataRows } = this.state;
+      const drIdx = dbDataRows.findIndex((x) => x.ID === row);
+      const datarow = dbDataRows[drIdx];
+
+      return (
+        <Modal trigger={<Button size="mini">Edit Me!</Button>}>
+          <Modal.Header>Edit modal</Modal.Header>
+          <Modal.Content>
+            <Modal.Description>
+              <Header>Hello from Modal!</Header>
+              <span>{`Editing ID: ${JSON.stringify(datarow)}`}</span>
+            </Modal.Description>
+          </Modal.Content>
+        </Modal>
+      );
+    };
+
     this.ViewPage = () => {
       /* Get data rows */
       const { dbDataRows, qListLoading } = this.state;
       const dbHeader = [
-        { Header: 'ID', accessor: 'ID' },
+        { Header: 'ID', accessor: 'ID', width: 50 },
         { Header: 'Category', accessor: 'CATEGORY' },
         {
           Header: 'Questions',
@@ -96,9 +133,18 @@ export default class App extends React.Component {
             );
           },
         },
-        { Header: 'Level', accessor: 'DIFFICULTY_LV' },
+        {
+          Header: 'Level',
+          accessor: 'DIFFICULTY_LV',
+          Cell: (p) => <Rating icon="star" disabled maxRating={5} rating={p.value} />,
+        },
         { Header: 'Created date', accessor: 'CREATED_DATE' },
         { Header: 'Last updated', accessor: 'LAST_UPDATED' },
+        {
+          Header: 'Update',
+          accessor: 'ID',
+          Cell: (p) => this.showEdit2(p.value),
+        },
       ];
 
       return (
@@ -106,7 +152,7 @@ export default class App extends React.Component {
           <Segment>
             <Button
               icon
-              labelPosition="left"
+              labelPosition="right"
               size="mini"
               onClick={() => {
                 /* Fetch data from DB */
@@ -123,6 +169,7 @@ export default class App extends React.Component {
               columns={dbHeader}
               defaultPageSize={10}
               loading={qListLoading}
+              style={{ height: '400px' }}
               className="-striped -highlight"
             />
           </Segment>
@@ -138,11 +185,15 @@ export default class App extends React.Component {
       ];
       return (
         <div>
-          <h1>Create only</h1>
-          <Icon loading name="spinner" />
-          <Icon loading name="certificate" />
-          <Icon loading name="asterisk" />
-          <Dropdown placeholder="Category" multiple search selection options={dataOptions} />
+          <Segment>
+            <Container>
+              <h1>Create only</h1>
+              <Icon loading name="spinner" />
+              <Icon loading name="certificate" />
+              <Icon loading name="asterisk" />
+              <Dropdown placeholder="Category" multiple search selection options={dataOptions} />
+            </Container>
+          </Segment>
         </div>
       );
     };
@@ -174,7 +225,7 @@ export default class App extends React.Component {
           filePath = null;
         }
       } else {
-        Console.log(`Error obtaining dialog object ${dialog}`);
+        Console.log(`Error obtaining openfile dialog object ${dialog}`);
       }
 
       /* Need to update state? */
@@ -194,6 +245,32 @@ export default class App extends React.Component {
       Console.log('Reload DB requested!');
     };
 
+    /* Export current DB file */
+    this.exportDb = () => {
+      /* Open Save dialog */
+      let saveFilePath = null;
+      if (dialog !== null) {
+        saveFilePath = dialog.showSaveDialog({
+          filters: [{ name: 'DB File', extensions: ['db'] }],
+        });
+        if (saveFilePath === undefined) {
+          saveFilePath = null;
+        }
+      } else {
+        Console.log(`Error obtaining savefile dialog object ${dialog}`);
+      }
+
+      /* Send save command */
+      if (saveFilePath !== null) {
+        this.sendDbCmdAsync('exportDb', {
+          newPath: this.state.dbDataFile,
+          savePath: saveFilePath,
+        });
+        Console.log('Export DB requested!');
+      }
+    };
+
+    /* Insert new question test */
     this.insertQuestion = () => {
       const res = this.sendDbCmdSync('insertNew', {
         cat: 2,
@@ -298,7 +375,9 @@ export default class App extends React.Component {
 
         default:
           Console.log(
-            `CMD: ${cmd} is not supported yet (ASYNC). Error MSG: ${errMsg}, data: ${data}`,
+            `CMD: ${cmd} is not supported yet (ASYNC). Error MSG: ${errMsg}, data: ${JSON.stringify(
+              data,
+            )}`,
           );
           break;
       }
@@ -364,9 +443,6 @@ export default class App extends React.Component {
                     {dbDataFile}
                   </Label>
                   <Icon name="circle" color={dbStatusColor} />
-                </Container>
-                <br />
-                <Container>
                   <Button
                     icon
                     compact
@@ -375,6 +451,15 @@ export default class App extends React.Component {
                     onClick={() => this.reloadDb()}>
                     <Icon name="refresh" />
                     Refresh DB
+                  </Button>
+                  <Button
+                    icon
+                    compact
+                    labelPosition="right"
+                    size="mini"
+                    onClick={() => this.exportDb()}>
+                    <Icon name="download" />
+                    Export DB
                   </Button>
                 </Container>
               </Segment>

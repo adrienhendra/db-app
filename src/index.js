@@ -65,7 +65,7 @@ const handleDbSyncCommands = async (event, arg) => {
       break;
 
     default:
-      Console.log(`CMD: ${cmd}, DATA: ${data} is not supported yet (SYNC).`);
+      Console.log(`CMD: ${cmd}, DATA: ${JSON.stringify(data)} is not supported yet (SYNC).`);
       retVal.errMsg = 'This command is not supported yet.';
       retVal.data = { success: false, data: null };
       break;
@@ -134,7 +134,7 @@ const handleDbAsyncCommands = async (event, arg) => {
       break;
 
     default:
-      Console.log(`CMD: ${cmd}, DATA: ${data} is not supported yet (ASYNC).`);
+      Console.log(`CMD: ${cmd}, DATA: ${JSON.stringify(data)} is not supported yet (ASYNC).`);
       retVal.errMsg = 'This command is not supported yet.';
       retVal.data = { success: false, data: null };
       break;
@@ -158,10 +158,10 @@ const createWindow = async () => {
 
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 960,
-    minWidth: 1280,
-    minHeight: 960,
+    width: 1024,
+    height: 800,
+    minWidth: 1024,
+    minHeight: 800,
     frame: true,
     title: 'Soepriatna DB App',
     useContentSize: false,
