@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+</head>
+
+<body style="overflow: hidden; background-color: rgba(0,0,0,0); margin: 0">
+    <H1>test</H1>
+    <div id="EditApp"></div>
+</body>
+
+<style>
+    @import url('./app.css');
+    @import url('./semantic/dist/semantic.min.css');
+    @import url('./dist/katex/katex.min.css');
+    @import url('./dist/rq-style/quill.snow.css');
+    @import url('./dist/react-table/react-table.css');
+</style>
+
+<!-- Include KaTeX script -->
+<script src='./dist/katex/katex.min.js'> </script>
+
+<script type="text/jsx">
+import React from 'react';
+import ReactDOM from 'react-dom';
+import {AppContainer} from 'react-hot-loader';
+
+const render = () => {
+  const EditApp = require('./editapp').default;
+  ReactDOM.render(<AppContainer><EditApp /></AppContainer>, document.getElementById('EditApp'));
+}
+
+render();
+if (module.hot) {
+  module.hot.accept(render);
+}
+</script>
+
+</html>

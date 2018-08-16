@@ -19,7 +19,6 @@ import {
   Label,
   Dropdown,
   Rating,
-  Modal,
 } from 'semantic-ui-react';
 
 /* React table */
@@ -87,29 +86,12 @@ export default class App extends React.Component {
             onClick={() => {
               const drIdx = dbDataRows.findIndex((x) => x.ID === row);
               const datarow = dbDataRows[drIdx];
-              dialog.showMessageBox({ message: `Editing ID: ${JSON.stringify(datarow)}` });
+              // dialog.showMessageBox({ message: `Editing ID: ${JSON.stringify(datarow)}` });
+              this.sendRendererReqAsync('launchQEdit', { editData: datarow });
             }}>
             {`Edit Q-${row}`}
           </Button>
         </div>
-      );
-    };
-
-    this.showEdit2 = (row) => {
-      const { dbDataRows } = this.state;
-      const drIdx = dbDataRows.findIndex((x) => x.ID === row);
-      const datarow = dbDataRows[drIdx];
-
-      return (
-        <Modal trigger={<Button size="mini">Edit Me!</Button>}>
-          <Modal.Header>Edit modal</Modal.Header>
-          <Modal.Content>
-            <Modal.Description>
-              <Header>Hello from Modal!</Header>
-              <span>{`Editing ID: ${JSON.stringify(datarow)}`}</span>
-            </Modal.Description>
-          </Modal.Content>
-        </Modal>
       );
     };
 
@@ -396,6 +378,36 @@ export default class App extends React.Component {
 
     /* Receive ASYNC response from IPC */
     ipc.on('db-async-command-resp', this.handleIpcAsyncResp);
+
+    /* IPC handler from another renderer */
+    this.handleIpcRendererAsyncRecv = (event, arg) => {
+      const { cmd, errMsg, data } = arg;
+
+      switch (cmd) {
+        case 'launchQEdit':
+          if (data.success === true) {
+            Console.log('launchQEdit succeeded');
+          } else {
+            Console.log(`launchQEdit failed: ${errMsg}, data: ${data}`);
+          }
+          break;
+
+        default:
+          Console.log(
+            `CMD: ${cmd} is not supported yet (ASYNC). Error MSG: ${errMsg}, data: ${JSON.stringify(
+              data,
+            )}`,
+          );
+          break;
+      }
+    };
+
+    /* Send ASYNC to another renderer */
+    this.sendRendererReqAsync = (dbCmd, paramObj = null) =>
+      ipc.send('renderer-async-msg-req', { cmd: dbCmd, data: paramObj });
+
+    /* Receive ASYNC from another renderer */
+    ipc.on('renderer-async-msg-resp', this.handleIpcRendererAsyncRecv);
 
     /* Watchdog */
     this.watchdog = () => {

@@ -24,6 +24,7 @@ if (squi) app.quit();
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow;
+let qeditModalWindow;
 
 const isDevMode = process.execPath.match(/[\\/]electron/);
 
@@ -142,20 +143,61 @@ const handleDbAsyncCommands = async (event, arg) => {
   event.sender.send('db-async-command-resp', retVal);
 };
 
-const createWindow = async () => {
-  try {
-    /* Start connection to DB */
-    await mydb.connect();
-  } catch (err) {
-    Console.log(`Cannot connect to database: ${err.errMsg}, ${err.data}`);
+/* This is to handle ASYNC commands */
+const handleIpcRendererAsyncCmd = async (event, arg) => {
+  const { cmd, data } = arg;
+  const retVal = {
+    cmd,
+    errMsg: null,
+    data: null,
+  };
+
+  const passVal = {
+    cmd,
+    data,
+  };
+
+  let res = null;
+
+  switch (cmd) {
+    case 'launchQEdit':
+      Console.log(data);
+
+      /* Launch QEdit Modal Window */
+      qeditModalWindow = new BrowserWindow({ parent: mainWindow, modal: true, show: false });
+      qeditModalWindow.loadURL(`file://${__dirname}/editpage.html`);
+      qeditModalWindow.once('ready-to-show', async () => {
+        qeditModalWindow.show();
+      });
+
+      qeditModalWindow.once('show', async () => {
+        /* Open the DevTools. */
+        if (isDevMode) {
+          qeditModalWindow.webContents.openDevTools();
+        }
+
+        /* Pass value to other renderer */
+        qeditModalWindow.webContents.send('r2r-async-msg-req', passVal);
+      });
+
+      /* Summarize result */
+      res = [];
+      retVal.errMsg = null;
+      retVal.data = { success: true, data: res };
+      break;
+
+    default:
+      Console.log(`CMD: ${cmd}, DATA: ${JSON.stringify(data)} is not supported yet (ASYNC).`);
+      retVal.errMsg = 'This command is not supported yet.';
+      retVal.data = { success: false, data: null };
+      break;
   }
 
-  /* Connect IPCs */
-  /* Handle SYNC commands */
-  ipc.on('db-sync-command-req', handleDbSyncCommands);
-  /* Handle ASYNC commands */
-  ipc.on('db-async-command-req', handleDbAsyncCommands);
+  /* Reply to original renderer */
+  event.sender.send('renderer-async-msg-resp', retVal);
+};
 
+const createWindow = async () => {
   // Create the browser window.
   mainWindow = new BrowserWindow({
     width: 1024,
@@ -188,7 +230,26 @@ const createWindow = async () => {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', createWindow);
+app.on('ready', async () => {
+  /* Start connection to DB */
+  try {
+    await mydb.connect();
+  } catch (err) {
+    Console.log(`Cannot connect to database: ${err.errMsg}, ${err.data}`);
+  }
+
+  /* Connect IPCs */
+  /* Handle SYNC commands */
+  ipc.on('db-sync-command-req', handleDbSyncCommands);
+
+  /* Handle ASYNC commands */
+  ipc.on('db-async-command-req', handleDbAsyncCommands);
+
+  /* Handle ASYNC commands from renderer */
+  ipc.on('renderer-async-msg-req', handleIpcRendererAsyncCmd);
+
+  createWindow();
+});
 
 // Quit when all windows are closed.
 app.on('window-all-closed', async () => {
