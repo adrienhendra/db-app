@@ -160,60 +160,82 @@ const handleIpcRendererAsyncCmd = async (event, arg) => {
   let res = null;
 
   let newModalWindow = null;
+  let existModId = -1;
+  let modWinSizeW = 800;
+  let modWinSizeH = 600;
 
   switch (cmd) {
     case 'launchQEdit':
       // Console.log(data);
-
       /* Check if selected modal window is already exists */
-
-      /* Launch QEdit Modal Window */
-      newModalWindow = new BrowserWindow({ show: false });
-
-      /* Add new modal windows to list */
-      qeditModalWindows.push({ qID: data.editData.ID, modal: newModalWindow, modalTs: Date.now() });
-
-      /* Print for debug */
-      // Console.log('-----');
-      // qeditModalWindows.forEach((m) => {
-      //   Console.log(`Modal ID: ${m.qID}, ${typeof m.modal}`);
-      // });
-      // Console.log('-----');
-
-      newModalWindow.loadURL(`file://${__dirname}/editpage.html`);
-      newModalWindow.once('ready-to-show', async () => {
-        newModalWindow.show();
-      });
-
-      newModalWindow.once('show', async () => {
-        /* Open the DevTools. */
+      existModId = qeditModalWindows.findIndex((o) => o.qID === data.editData.ID);
+      if (existModId >= 0) {
+        /* Already exist, refocus */
+        qeditModalWindows[existModId].modal.focus();
+      } else {
         if (isDevMode) {
-          newModalWindow.webContents.openDevTools();
+          modWinSizeW = 1000;
+          modWinSizeH = 600;
         }
+        /* Not yet, create new QEdit modal */
+        newModalWindow = new BrowserWindow({
+          show: false,
+          maximizable: true,
+          minimizable: true,
+          minWidth: modWinSizeW,
+          minHeight: modWinSizeH,
+          width: modWinSizeW,
+          height: modWinSizeH,
+        });
 
-        /* Pass value to other renderer */
-        newModalWindow.webContents.send('r2r-async-msg-req', passVal);
-      });
+        /* Add new modal windows to list */
+        qeditModalWindows.push({
+          qID: data.editData.ID,
+          modal: newModalWindow,
+        });
 
-      newModalWindow.once('close', () => {
-        Console.log(`Closing modal for qID ${data.editData.ID}.`);
-        /* Remove from array */
-        const modIdx = qeditModalWindows.findIndex(
-          (o) => o.qID === data.editData.ID && o.modal === newModalWindow,
-        );
-        Console.log(`  Found modal idx: ${modIdx}`);
-        if (modIdx >= 0) {
-          qeditModalWindows[modIdx] = null;
-          qeditModalWindows.splice(modIdx, 1);
-          Console.log(
-            `  Modal window count: ${
-              qeditModalWindows.length
-            }, selected index: ${modIdx} has been destroyed!`,
+        /* Print for debug */
+        // Console.log('-----');
+        // qeditModalWindows.forEach((m) => {
+        //   Console.log(`Modal ID: ${m.qID}, ${typeof m.modal}`);
+        // });
+        // Console.log('-----');
+
+        newModalWindow.loadURL(`file://${__dirname}/editpage.html`);
+        newModalWindow.once('ready-to-show', async () => {
+          newModalWindow.show();
+        });
+
+        newModalWindow.once('show', async () => {
+          /* Open the DevTools. */
+          if (isDevMode) {
+            newModalWindow.webContents.openDevTools();
+          }
+
+          /* Pass value to other renderer */
+          newModalWindow.webContents.send('r2r-async-msg-req', passVal);
+        });
+
+        newModalWindow.once('close', () => {
+          // Console.log(`Closing modal for qID ${data.editData.ID}.`);
+          /* Remove from array */
+          const modIdx = qeditModalWindows.findIndex(
+            (o) => o.qID === data.editData.ID && o.modal === newModalWindow,
           );
-        } else {
-          Console.log(`  Cannot find the modal for qID ${data.editData.ID}.`);
-        }
-      });
+          // Console.log(`  Found modal idx: ${modIdx}`);
+          if (modIdx >= 0) {
+            qeditModalWindows[modIdx] = null;
+            qeditModalWindows.splice(modIdx, 1);
+            // Console.log(
+            //   `  Modal window count: ${
+            //     qeditModalWindows.length
+            //   }, selected index: ${modIdx} has been destroyed!`,
+            // );
+          } else {
+            Console.log(`Cannot find the modal for qID ${data.editData.ID}.`);
+          }
+        });
+      }
 
       /* Summarize result */
       res = [];
@@ -233,12 +255,19 @@ const handleIpcRendererAsyncCmd = async (event, arg) => {
 };
 
 const createWindow = async () => {
+  let winSizeW = 1024;
+  let winSizeH = 800;
+  if (isDevMode) {
+    winSizeW = 1680;
+    winSizeH = 800;
+  }
+
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    width: 1024,
-    height: 800,
-    minWidth: 1024,
-    minHeight: 800,
+    width: winSizeW,
+    height: winSizeH,
+    minWidth: winSizeW,
+    minHeight: winSizeH,
     frame: true,
     title: 'Soepriatna DB App',
     useContentSize: false,
@@ -256,7 +285,7 @@ const createWindow = async () => {
   /* Emitted when the window is closing */
   mainWindow.on('close', () => {
     const openModalCount = qeditModalWindows.length;
-    Console.log(`Need to close ${openModalCount} modal windows.`);
+    // Console.log(`Need to close ${openModalCount} modal windows.`);
 
     /* Close all modal windows (backwards ...) */
     if (openModalCount > 0) {
@@ -272,18 +301,6 @@ const createWindow = async () => {
 
   // Emitted when the window is closed.
   mainWindow.on('closed', () => {
-    // Console.log(`Need to close ${qeditModalWindows.length} modal windows.`);
-    // /* Close all modal windows */
-    // if (qeditModalWindows.length > 0) {
-    //   let i = 0;
-    //   for (i = 0; i < qeditModalWindows.length; i += 1) {
-    //     Console.log(
-    //       `Destroying Modal ID: ${qeditModalWindows[i].qID}, ${typeof qeditModalWindows[i].modal}`,
-    //     );
-    //     qeditModalWindows[i].modal.close();
-    //   }
-    // }
-
     // Dereference the window object, usually you would store windows
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
@@ -326,19 +343,6 @@ app.on('window-all-closed', async () => {
   } catch (err) {
     Console.log(`Cannot disconnect database: ${err.errMsg}, ${err.data}`);
   }
-
-  // /* Close all open modal windows */
-  // Console.log(`Need to close ${qeditModalWindows.length} modal windows.`);
-  // /* Close all modal windows */
-  // if (qeditModalWindows.length > 0) {
-  //   let i = 0;
-  //   for (i = 0; i < qeditModalWindows.length; i += 1) {
-  //     Console.log(
-  //       `Destroying Modal ID: ${qeditModalWindows[i].qID}, ${typeof qeditModalWindows[i].modal}`,
-  //     );
-  //     qeditModalWindows[i].modal.close();
-  //   }
-  // }
 
   // On OS X it is common for applications and their menu bar
   // to stay active until the user quits explicitly with Cmd + Q

@@ -99,8 +99,8 @@ export default class App extends React.Component {
       /* Get data rows */
       const { dbDataRows, qListLoading } = this.state;
       const dbHeader = [
-        { Header: 'ID', accessor: 'ID', width: 50 },
-        { Header: 'Category', accessor: 'CATEGORY' },
+        { Header: 'ID', accessor: 'ID', width: 75 },
+        { Header: 'Category', accessor: 'CATEGORY', width: 75 },
         {
           Header: 'Questions',
           accessor: 'QUESTION_DATA',
@@ -114,11 +114,13 @@ export default class App extends React.Component {
               </div>
             );
           },
+          width: 400,
         },
         {
           Header: 'Level',
           accessor: 'DIFFICULTY_LV',
           Cell: (p) => <Rating icon="star" disabled maxRating={5} rating={p.value} />,
+          width: 110,
         },
         { Header: 'Created date', accessor: 'CREATED_DATE' },
         { Header: 'Last updated', accessor: 'LAST_UPDATED' },
@@ -279,34 +281,6 @@ export default class App extends React.Component {
       this.setState({ qListLoading: true });
       this.sendDbCmdAsync('getQuestionList');
     };
-
-    // /* React Quill setup */
-    // this.modules = {
-    //   formula: true,
-    //   toolbar: [
-    //     [{ header: [1, 2, 3, false] }],
-    //     ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-    //     [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
-    //     ['link', 'image'],
-    //     ['clean'],
-    //     ['formula'],
-    //   ],
-    // };
-
-    // /* React Quill formats */
-    // this.formats = [
-    //   'header',
-    //   'bold',
-    //   'italic',
-    //   'underline',
-    //   'strike',
-    //   'blockquote',
-    //   'list',
-    //   'bullet',
-    //   'indent',
-    //   'link',
-    //   'image',
-    // ];
 
     /* IPC handlers */
     this.handleIpcAsyncResp = (event, arg) => {
