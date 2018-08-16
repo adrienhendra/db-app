@@ -24,7 +24,7 @@ if (squi) app.quit();
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow;
-let qeditModalWindow;
+const qeditModalWindows = [];
 
 const isDevMode = process.execPath.match(/[\\/]electron/);
 
@@ -159,25 +159,60 @@ const handleIpcRendererAsyncCmd = async (event, arg) => {
 
   let res = null;
 
+  let newModalWindow = null;
+
   switch (cmd) {
     case 'launchQEdit':
-      Console.log(data);
+      // Console.log(data);
+
+      /* Check if selected modal window is already exists */
 
       /* Launch QEdit Modal Window */
-      qeditModalWindow = new BrowserWindow({ parent: mainWindow, modal: true, show: false });
-      qeditModalWindow.loadURL(`file://${__dirname}/editpage.html`);
-      qeditModalWindow.once('ready-to-show', async () => {
-        qeditModalWindow.show();
+      newModalWindow = new BrowserWindow({ show: false });
+
+      /* Add new modal windows to list */
+      qeditModalWindows.push({ qID: data.editData.ID, modal: newModalWindow, modalTs: Date.now() });
+
+      /* Print for debug */
+      // Console.log('-----');
+      // qeditModalWindows.forEach((m) => {
+      //   Console.log(`Modal ID: ${m.qID}, ${typeof m.modal}`);
+      // });
+      // Console.log('-----');
+
+      newModalWindow.loadURL(`file://${__dirname}/editpage.html`);
+      newModalWindow.once('ready-to-show', async () => {
+        newModalWindow.show();
       });
 
-      qeditModalWindow.once('show', async () => {
+      newModalWindow.once('show', async () => {
         /* Open the DevTools. */
         if (isDevMode) {
-          qeditModalWindow.webContents.openDevTools();
+          newModalWindow.webContents.openDevTools();
         }
 
         /* Pass value to other renderer */
-        qeditModalWindow.webContents.send('r2r-async-msg-req', passVal);
+        newModalWindow.webContents.send('r2r-async-msg-req', passVal);
+      });
+
+      newModalWindow.once('close', () => {
+        Console.log(`Closing modal for qID ${data.editData.ID}.`);
+        /* Remove from array */
+        const modIdx = qeditModalWindows.findIndex(
+          (o) => o.qID === data.editData.ID && o.modal === newModalWindow,
+        );
+        Console.log(`  Found modal idx: ${modIdx}`);
+        if (modIdx >= 0) {
+          qeditModalWindows[modIdx] = null;
+          qeditModalWindows.splice(modIdx, 1);
+          Console.log(
+            `  Modal window count: ${
+              qeditModalWindows.length
+            }, selected index: ${modIdx} has been destroyed!`,
+          );
+        } else {
+          Console.log(`  Cannot find the modal for qID ${data.editData.ID}.`);
+        }
       });
 
       /* Summarize result */
@@ -218,8 +253,37 @@ const createWindow = async () => {
     mainWindow.webContents.openDevTools();
   }
 
+  /* Emitted when the window is closing */
+  mainWindow.on('close', () => {
+    const openModalCount = qeditModalWindows.length;
+    Console.log(`Need to close ${openModalCount} modal windows.`);
+
+    /* Close all modal windows (backwards ...) */
+    if (openModalCount > 0) {
+      let i = 0;
+      for (i = openModalCount - 1; i >= 0; i -= 1) {
+        Console.log(
+          `Destroying Modal ID: ${qeditModalWindows[i].qID}, ${typeof qeditModalWindows[i].modal}`,
+        );
+        qeditModalWindows[i].modal.close();
+      }
+    }
+  });
+
   // Emitted when the window is closed.
   mainWindow.on('closed', () => {
+    // Console.log(`Need to close ${qeditModalWindows.length} modal windows.`);
+    // /* Close all modal windows */
+    // if (qeditModalWindows.length > 0) {
+    //   let i = 0;
+    //   for (i = 0; i < qeditModalWindows.length; i += 1) {
+    //     Console.log(
+    //       `Destroying Modal ID: ${qeditModalWindows[i].qID}, ${typeof qeditModalWindows[i].modal}`,
+    //     );
+    //     qeditModalWindows[i].modal.close();
+    //   }
+    // }
+
     // Dereference the window object, usually you would store windows
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
@@ -262,6 +326,19 @@ app.on('window-all-closed', async () => {
   } catch (err) {
     Console.log(`Cannot disconnect database: ${err.errMsg}, ${err.data}`);
   }
+
+  // /* Close all open modal windows */
+  // Console.log(`Need to close ${qeditModalWindows.length} modal windows.`);
+  // /* Close all modal windows */
+  // if (qeditModalWindows.length > 0) {
+  //   let i = 0;
+  //   for (i = 0; i < qeditModalWindows.length; i += 1) {
+  //     Console.log(
+  //       `Destroying Modal ID: ${qeditModalWindows[i].qID}, ${typeof qeditModalWindows[i].modal}`,
+  //     );
+  //     qeditModalWindows[i].modal.close();
+  //   }
+  // }
 
   // On OS X it is common for applications and their menu bar
   // to stay active until the user quits explicitly with Cmd + Q
