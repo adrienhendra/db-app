@@ -2,7 +2,7 @@
 import React from 'react';
 
 /* Electrons */
-import electron, { ipcRenderer } from 'electron';
+import electron, { ipcRenderer, MenuItem } from 'electron';
 
 /* React router components */
 import { HashRouter as Router, Route, NavLink } from 'react-router-dom';
@@ -24,9 +24,8 @@ import {
 /* React table */
 import ReactTable from 'react-table';
 
-/* My components */
-// import './components/home';
-// import Home from './components/home';
+/* React Quill */
+// import ReactQuill from 'react-quill';
 
 /* Get dialog from electron */
 const { dialog } = electron.remote;
@@ -37,8 +36,8 @@ const ipc = ipcRenderer;
 /* Alias for my console debug */
 const Console = console;
 
-/* React Quill */
-// import ReactQuill from 'react-quill';
+/* Globals */
+const DbStatusColors = ['red', 'green', 'yellow'];
 
 export default class App extends React.Component {
   constructor(props) {
@@ -52,55 +51,42 @@ export default class App extends React.Component {
       dbDataRows: [],
       pageLoading: false,
       qListLoading: false,
+      qTableHeight: 200,
     };
 
-    /* Router target */
-    this.HomePage = () => (
-      <div>
-        <p>This is home</p>
-        <Button icon labelPosition="right" onClick={() => this.openDbFileFn()}>
-          <Icon name="pause" />
-          Hello World!
-        </Button>
-
-        {/* Add data */}
-        <Button icon labelPosition="right" onClick={() => this.insertQuestion()}>
-          <Icon name="add" />
-          Insert data
-        </Button>
-
-        {/* IPC data */}
-        <Button icon labelPosition="right" onClick={() => this.sendDbCmdAsync('hello')}>
-          <Icon name="eye" />
-          IPC test
-        </Button>
-      </div>
-    );
-
+    /* Edit helper */
     this.showEdit = (row) => {
       const { dbDataRows } = this.state;
       return (
-        <div>
-          <Button
-            size="mini"
-            onClick={() => {
-              const drIdx = dbDataRows.findIndex((x) => x.ID === row);
-              const datarow = dbDataRows[drIdx];
-              // dialog.showMessageBox({ message: `Editing ID: ${JSON.stringify(datarow)}` });
-              this.sendRendererReqAsync('launchQEdit', { editData: datarow });
-            }}>
-            {`Edit Q-${row}`}
-          </Button>
-        </div>
+        <Button
+          size="mini"
+          onClick={() => {
+            const drIdx = dbDataRows.findIndex((x) => x.ID === row);
+            const datarow = dbDataRows[drIdx];
+            this.sendRendererReqAsync('launchQEdit', { editData: datarow });
+          }}>
+          Edit
+        </Button>
       );
     };
 
-    this.ViewPage = () => {
+    this.recalcQtableSize = () => {
+      const windowBound = electron.remote.getCurrentWindow().getBounds();
+      Console.log(`Current window bound: ${windowBound.width}x ${windowBound.height}`);
+      let tableHeight = windowBound.height - 300;
+      if (tableHeight < 200) {
+        tableHeight = 200;
+      }
+      this.setState({ qTableHeight: tableHeight });
+    };
+
+    /* Router target */
+    this.HomePage = () => {
       /* Get data rows */
-      const { dbDataRows, qListLoading } = this.state;
+      const { dbDataRows, qListLoading, qTableHeight } = this.state;
       const dbHeader = [
-        { Header: 'ID', accessor: 'ID', width: 75 },
-        { Header: 'Category', accessor: 'CATEGORY', width: 75 },
+        { Header: 'ID', accessor: 'ID', width: 75, style: { textAlign: 'center' } },
+        { Header: 'Category', accessor: 'CATEGORY', width: 75, style: { textAlign: 'center' } },
         {
           Header: 'Questions',
           accessor: 'QUESTION_DATA',
@@ -114,28 +100,36 @@ export default class App extends React.Component {
               </div>
             );
           },
-          width: 400,
         },
         {
           Header: 'Level',
           accessor: 'DIFFICULTY_LV',
           Cell: (p) => <Rating icon="star" disabled maxRating={5} rating={p.value} />,
           width: 110,
+          style: { textAlign: 'center' },
         },
-        { Header: 'Created date', accessor: 'CREATED_DATE' },
-        { Header: 'Last updated', accessor: 'LAST_UPDATED' },
         {
-          Header: 'Update',
+          Header: 'Created date',
+          accessor: 'CREATED_DATE',
+          width: 150,
+          style: { textAlign: 'center' },
+        },
+        {
+          Header: 'Edit',
           accessor: 'ID',
           Cell: (p) => this.showEdit(p.value),
+          width: 75,
+          style: { textAlign: 'center' },
         },
       ];
 
       return (
-        <div>
-          <Segment>
+        <Segment>
+          <Label attached="top left">Question Database View</Label>
+          <Container textAlign="right">
             <Button
               icon
+              compact
               labelPosition="right"
               size="mini"
               onClick={() => {
@@ -145,54 +139,58 @@ export default class App extends React.Component {
               <Icon name="refresh" />
               Update table
             </Button>
-          </Segment>
-          <Segment>
-            {/* <ReactTable data={testDataTbl} columns={testDataCols} /> */}
+          </Container>
+          <br />
+          <Container>
             <ReactTable
               data={dbDataRows}
               columns={dbHeader}
               defaultPageSize={10}
               loading={qListLoading}
-              style={{ height: '400px' }}
+              style={{ height: qTableHeight }}
               className="-striped -highlight"
             />
-          </Segment>
-        </div>
+          </Container>
+        </Segment>
       );
     };
 
-    this.CreatePage = () => {
-      const dataOptions = [
-        { key: '1', value: '1', text: 'LALA' },
-        { key: '2', value: '2', text: 'LILI' },
-        { key: '3', value: '3', text: 'LULU' },
-      ];
+    this.DbPage = () => {
+      const { dbDataFile, dbStatus, pageLoading } = this.state;
+
       return (
-        <div>
-          <Segment>
-            <Container>
-              <h1>Create only</h1>
-              <Icon loading name="spinner" />
-              <Icon loading name="certificate" />
-              <Icon loading name="asterisk" />
-              <Dropdown placeholder="Category" multiple search selection options={dataOptions} />
-            </Container>
-          </Segment>
-        </div>
+        <Segment textAlign="center">
+          <Label attached="top left">Database control</Label>
+          <Container>
+            <Label size="medium">Select active database:</Label>
+            <Label size="medium" color="teal" onClick={() => this.openDbFileFn()}>
+              {dbDataFile}
+            </Label>
+            <Icon name="circle" color={DbStatusColors[dbStatus]} />
+            <Button icon compact labelPosition="right" size="mini" onClick={() => this.reloadDb()}>
+              <Icon name="refresh" />
+              Refresh DB
+            </Button>
+            <Button icon compact labelPosition="right" size="mini" onClick={() => this.exportDb()}>
+              <Icon name="download" />
+              Export DB
+            </Button>
+          </Container>
+        </Segment>
       );
     };
 
-    this.UpdatePage = () => (
-      <div>
-        <h1>This is Update app</h1>
-      </div>
-    );
-
-    this.DeletePage = () => (
-      <div>
-        <h1>This is Delete Page</h1>
-      </div>
-    );
+    this.AdvPage = () => {
+      const { dbDataFile, dbStatus, pageLoading } = this.state;
+      return (
+        <Segment textAlign="center">
+          <Label attached="top left">Advanced Options</Label>
+          <Container>
+            <Header>TBD</Header>
+          </Container>
+        </Segment>
+      );
+    };
 
     /* Methods */
     this.openDbFileFn = () => {
@@ -311,11 +309,13 @@ export default class App extends React.Component {
             }
           } else {
             Console.log(`Get DB status failed: ${errMsg}, data: ${data}`);
-            this.setState({ dbStatus: -1 });
+            this.setState({ dbStatus: 2 });
           }
           break;
 
         case 'getQuestionList':
+          /* Refresh table height */
+          this.recalcQtableSize();
           if (data.success === true) {
             // Console.log('Get question list succeeded');
             this.setState({ dbDataRows: data.data, qListLoading: false });
@@ -397,82 +397,49 @@ export default class App extends React.Component {
     /* Force to fetch and populate data from DB */
     this.sendDbCmdAsync('getQuestionList');
 
+    /* Window related functions */
+    this.resizeDebounceTimer = null;
+
+    this.handleOnResize = () => {
+      /* Debouncer */
+      if (this.resizeDebounceTimer !== null) clearTimeout(this.resizeDebounceTimer);
+      this.resizeDebounceTimer = setTimeout(() => {
+        this.recalcQtableSize();
+      }, 250);
+    };
+    electron.remote.getCurrentWindow().on('resize', this.handleOnResize);
+
     /* End of constructor */
   }
 
   render() {
     const { dbDataFile, dbStatus, pageLoading } = this.state;
-    /* Calculate status color */
-    let dbStatusColor = 'yellow'; // Assume unknown
-
-    if (dbStatus === 0) {
-      /* Not connected */
-      dbStatusColor = 'red';
-    } else if (dbStatus === 1) {
-      /* Connected */
-      dbStatusColor = 'green';
-    } else {
-      /* Unknown */
-      dbStatusColor = 'yellow';
-    }
 
     return (
       <Router>
-        <Grid>
+        <Grid container padded="vertically">
           <Grid.Row centered columns={1}>
-            <Grid.Column width={16}>
-              <Segment textAlign="center">
-                <Header>Database control</Header>
-                <Container>
-                  <Label size="medium">Select active database:</Label>
-                  <Label size="medium" color="teal" onClick={() => this.openDbFileFn()}>
-                    {dbDataFile}
+            <Menu fluid>
+              <Menu.Item name="home" position="left" as={NavLink} exact to="/" />
+              <Menu.Menu position="right">
+                <Menu.Item name="db" position="right" as={NavLink} to="/db">
+                  <Label horizontal color={DbStatusColors[dbStatus]}>
+                    DB
                   </Label>
-                  <Icon name="circle" color={dbStatusColor} />
-                  <Button
-                    icon
-                    compact
-                    labelPosition="right"
-                    size="mini"
-                    onClick={() => this.reloadDb()}>
-                    <Icon name="refresh" />
-                    Refresh DB
-                  </Button>
-                  <Button
-                    icon
-                    compact
-                    labelPosition="right"
-                    size="mini"
-                    onClick={() => this.exportDb()}>
-                    <Icon name="download" />
-                    Export DB
-                  </Button>
-                </Container>
-              </Segment>
-            </Grid.Column>
+                </Menu.Item>
+                <Menu.Item name="adv" position="right" as={NavLink} to="/adv">
+                  Advance
+                </Menu.Item>
+              </Menu.Menu>
+            </Menu>
           </Grid.Row>
-          <Grid.Row columns={2}>
-            <Grid.Column width={2}>
-              <Menu fluid vertical tabular>
-                <Menu.Item name="home" as={NavLink} exact to="/" />
-                <Menu.Item name="view" as={NavLink} to="/view" />
-                <Menu.Item name="create" as={NavLink} to="/create" />
-                <Menu.Item name="update" as={NavLink} to="/update" />
-                <Menu.Item name="delete" as={NavLink} to="/delete" />
-              </Menu>
-            </Grid.Column>
-            <Grid.Column width={14}>
-              <Segment basic className="App-content">
-                <Route exact path="/" component={this.HomePage} />
-                <Route path="/view" component={this.ViewPage} />
-                <Route path="/create" component={this.CreatePage} />
-                <Route path="/update" component={this.UpdatePage} />
-                <Route path="/delete" component={this.DeletePage} />
-              </Segment>
-            </Grid.Column>
+          <Grid.Row columns={1}>
+            <Route exact path="/" component={this.HomePage} />
+            <Route path="/db" component={this.DbPage} />
+            <Route path="/adv" component={this.AdvPage} />
           </Grid.Row>
           <Grid.Row centered columns={1}>
-            <Header>By Adrien Soepriatna (c) 2018</Header>
+            <Container />
           </Grid.Row>
         </Grid>
       </Router>
