@@ -194,6 +194,90 @@ export default class SQDB {
                     DIFFICULTY_LV: v.DIFFICULTY_LV,
                     CREATED_DATE: v.CREATED_DATE,
                     LAST_UPDATED: v.LAST_UPDATED,
+                    OBSOLETED: v.OBSOLETED,
+                  };
+                  dataRows.push(rowObj);
+                });
+                retVal.data = dataRows;
+                resolve(retVal);
+              }
+            });
+          });
+        } else {
+          Console.log('SQDB is not connected!');
+          retVal.success = false;
+          retVal.errMsg = 'SQDB is not connected!';
+          reject(retVal);
+        }
+      });
+
+    this.getCategoryList = () =>
+      new Promise((resolve, reject) => {
+        const retVal = { success: false, errMsg: null, data: null };
+        if (this.state.connected) {
+          /* Prepare statement */
+          this.connection.serialize(() => {
+            /* Run */
+            this.connection.all('SELECT * FROM CATEGORY', {}, (err, rows) => {
+              if (err !== null) {
+                Console.log(`SQDB error, cannot get category list: ${err}`);
+                retVal.success = false;
+                retVal.errMsg = `SQDB error code: ${err.name}, ${err.message}`;
+                reject(retVal);
+              } else {
+                Console.log('SQDB get category list OK!');
+                retVal.success = true;
+                retVal.errMsg = null;
+
+                /* Convert to proper array of object here */
+                const dataRows = [];
+                rows.forEach((v) => {
+                  const rowObj = {
+                    ID: v.ID,
+                    CAT_GROUP: v.CAT_GROUP,
+                    LABEL: v.LABEL,
+                    DESCRIPTION: v.DESCRIPTION,
+                  };
+                  dataRows.push(rowObj);
+                });
+                retVal.data = dataRows;
+                resolve(retVal);
+              }
+            });
+          });
+        } else {
+          Console.log('SQDB is not connected!');
+          retVal.success = false;
+          retVal.errMsg = 'SQDB is not connected!';
+          reject(retVal);
+        }
+      });
+
+    this.getCatGroupList = () =>
+      new Promise((resolve, reject) => {
+        const retVal = { success: false, errMsg: null, data: null };
+        if (this.state.connected) {
+          /* Prepare statement */
+          this.connection.serialize(() => {
+            /* Run */
+            this.connection.all('SELECT * FROM CATEGORY_GRP', {}, (err, rows) => {
+              if (err !== null) {
+                Console.log(`SQDB error, cannot get category group list: ${err}`);
+                retVal.success = false;
+                retVal.errMsg = `SQDB error code: ${err.name}, ${err.message}`;
+                reject(retVal);
+              } else {
+                Console.log('SQDB get category group list OK!');
+                retVal.success = true;
+                retVal.errMsg = null;
+
+                /* Convert to proper array of object here */
+                const dataRows = [];
+                rows.forEach((v) => {
+                  const rowObj = {
+                    ID: v.ID,
+                    LABEL: v.LABEL,
+                    DESCRIPTION: v.DESCRIPTION,
                   };
                   dataRows.push(rowObj);
                 });

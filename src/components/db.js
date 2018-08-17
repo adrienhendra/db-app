@@ -17,10 +17,6 @@ export default class DB {
     this.dbConn = new MYDB();
     this.dbConnParam = null;
 
-    this.state = {
-      lastCatList: null,
-    };
-
     /* Set special DB parameters */
     this.setDbParam = (dbPath) => {
       this.dbConnParam = { type: 'sqlite3', path: dbPath };
@@ -88,9 +84,6 @@ export default class DB {
     };
 
     /* Application specific queries */
-    this.updateCategoryList = () => {
-      this.state.lastCatList = null;
-    };
 
     this.getQuestionList = async () => {
       if (this.dbConn === null) {
@@ -99,6 +92,26 @@ export default class DB {
 
       /* Connection is valid */
       const res = await this.dbConn.getQuestionList();
+      return res;
+    };
+
+    this.getCategoryList = async () => {
+      if (this.dbConn === null) {
+        return null;
+      }
+
+      /* Connection is valid */
+      const res = await this.dbConn.getCategoryList();
+      return res;
+    };
+
+    this.getCatGroupList = async () => {
+      if (this.dbConn === null) {
+        return null;
+      }
+
+      /* Connection is valid */
+      const res = await this.dbConn.getCatGroupList();
       return res;
     };
 

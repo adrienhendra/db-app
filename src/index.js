@@ -155,6 +155,34 @@ const handleDbAsyncCommands = async (event, arg) => {
       }
       break;
 
+    case 'getCategoryList':
+      try {
+        // Console.log(data);
+        res = await mydb.getCategoryList();
+        // Console.log(JSON.stringify(res));
+        retVal.errMsg = res.errMsg;
+        retVal.data = { success: res.success, data: res.data };
+      } catch (err) {
+        // Console.log(err);
+        retVal.errMsg = err.errMsg;
+        retVal.data = { success: err.success, data: err.data };
+      }
+      break;
+
+    case 'getCatGroupList':
+      try {
+        // Console.log(data);
+        res = await mydb.getCatGroupList();
+        // Console.log(JSON.stringify(res));
+        retVal.errMsg = res.errMsg;
+        retVal.data = { success: res.success, data: res.data };
+      } catch (err) {
+        // Console.log(err);
+        retVal.errMsg = err.errMsg;
+        retVal.data = { success: err.success, data: err.data };
+      }
+      break;
+
     case 'hello':
       Console.log(data);
       res = 'world';
@@ -214,6 +242,7 @@ const handleIpcRendererAsyncCmd = async (event, arg) => {
           minHeight: modWinSizeH,
           width: modWinSizeW,
           height: modWinSizeH,
+          title: `DB-APP: Edit Question ID: #${data.editData.ID}`,
         });
 
         /* Add new modal windows to list */

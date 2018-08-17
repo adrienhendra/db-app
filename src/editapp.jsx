@@ -44,6 +44,10 @@ export default class EditApp extends React.Component {
       qCreatedDate: '',
       qLastUpdated: '',
       editData: null,
+      categories: null,
+      qCatList: [],
+      cat_groups: null,
+      qCatGroupList: [],
     };
 
     /* React Quill setup */
@@ -115,9 +119,29 @@ export default class EditApp extends React.Component {
     this.handleIpcR2RAsyncRecv = (event, arg) => {
       const { cmd, data } = arg;
 
+      let tempVar1 = null;
+      let tempVar2 = null;
+
       switch (cmd) {
         case 'launchQEdit':
-          Console.log(`launchQEdit received: data: ${JSON.stringify(data)}`);
+          // Console.log(`launchQEdit received: data: ${JSON.stringify(data)}`);
+
+          tempVar1 = [];
+          data.cat_groups.forEach((e) => {
+            tempVar1.push({ text: e.LABEL, value: e.ID, description: e.DESCRIPTION });
+          });
+
+          tempVar2 = [];
+          data.categories.forEach((e) => {
+            const cgIdx = tempVar1.findIndex((v) => v.value === e.CAT_GROUP);
+            const groupName = tempVar1[cgIdx].text;
+            tempVar2.push({
+              text: `${groupName}-${e.LABEL}`,
+              value: e.ID,
+              description: e.DESCRIPTION,
+            });
+          });
+
           this.setState({
             qID: data.editData.ID,
             qCategory: data.editData.CATEGORY,
@@ -128,6 +152,10 @@ export default class EditApp extends React.Component {
             qCreatedDate: data.editData.CREATED_DATE,
             qLastUpdated: data.editData.LAST_UPDATED,
             editData: data.editData,
+            categories: data.categories,
+            qCatList: tempVar2,
+            cat_groups: data.cat_groups,
+            qCatGroupList: tempVar1,
           });
           break;
 
@@ -155,7 +183,9 @@ export default class EditApp extends React.Component {
       qDiffLv,
       qCreatedDate,
       qLastUpdated,
+      qCatList,
     } = this.state;
+
     return (
       <Segment>
         <Label attached="top" size="large">{`Question Update: #${qID}`}</Label>
@@ -172,7 +202,9 @@ export default class EditApp extends React.Component {
             theme="snow"
           />
         </Container>
+
         <br />
+
         <Container>
           <Segment>
             <Label attached="top left">Options</Label>
@@ -197,7 +229,9 @@ export default class EditApp extends React.Component {
               Add new option
             </Label>
           </Segment>
+
           <br />
+
           <Segment>
             <Label attached="top left">Answers</Label>
             {qAnswers.map((item, i) => (
@@ -221,7 +255,16 @@ export default class EditApp extends React.Component {
               Add new answer
             </Label>
           </Segment>
+
           <br />
+
+          <Segment>
+            <Label attached="top left">Select Category</Label>
+            <Dropdown placeholder="Select category" section options={qCatList} />
+          </Segment>
+
+          <br />
+
           <Label>
             Difficulty Level:
             <Label.Detail>

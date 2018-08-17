@@ -50,6 +50,8 @@ export default class App extends React.Component {
       dbStatus: -1,
       dbVersion: 'unknown',
       dbDataRows: [],
+      dbCatList: [],
+      dbCatGroupList: [],
       pageLoading: false,
       qListLoading: false,
       qTableHeight: 200,
@@ -57,14 +59,18 @@ export default class App extends React.Component {
 
     /* Edit helper */
     this.showEdit = (row) => {
-      const { dbDataRows } = this.state;
+      const { dbDataRows, dbCatList, dbCatGroupList } = this.state;
       return (
         <Button
           size="mini"
           onClick={() => {
             const drIdx = dbDataRows.findIndex((x) => x.ID === row);
             const datarow = dbDataRows[drIdx];
-            this.sendRendererReqAsync('launchQEdit', { editData: datarow });
+            this.sendRendererReqAsync('launchQEdit', {
+              editData: datarow,
+              categories: dbCatList,
+              cat_groups: dbCatGroupList,
+            });
           }}>
           Edit
         </Button>
@@ -293,6 +299,8 @@ export default class App extends React.Component {
       /* Set loading status */
       this.setState({ qListLoading: true });
       this.sendDbCmdAsync('getQuestionList');
+      this.sendDbCmdAsync('getCategoryList');
+      this.sendDbCmdAsync('getCatGroupList');
     };
 
     /* IPC handlers */
@@ -351,6 +359,26 @@ export default class App extends React.Component {
           } else {
             Console.log(`Get question list failed: ${errMsg}, data: ${data}`);
             this.setState({ dbDataRows: [], qListLoading: true });
+          }
+          break;
+
+        case 'getCategoryList':
+          if (data.success === true) {
+            // Console.log('Get category list succeeded');
+            this.setState({ dbCatList: data.data, qListLoading: false });
+          } else {
+            Console.log(`Get category list failed: ${errMsg}, data: ${data}`);
+            this.setState({ dbCatList: [], qListLoading: true });
+          }
+          break;
+
+        case 'getCatGroupList':
+          if (data.success === true) {
+            // Console.log('Get category group list succeeded');
+            this.setState({ dbCatGroupList: data.data, qListLoading: false });
+          } else {
+            Console.log(`Get category group list failed: ${errMsg}, data: ${data}`);
+            this.setState({ dbCatGroupList: [], qListLoading: true });
           }
           break;
 
@@ -425,6 +453,8 @@ export default class App extends React.Component {
 
     /* Force to fetch and populate data from DB */
     this.sendDbCmdAsync('getQuestionList');
+    this.sendDbCmdAsync('getCategoryList');
+    this.sendDbCmdAsync('getCatGroupList');
 
     /* Window related functions */
     this.resizeDebounceTimer = null;
