@@ -19,6 +19,8 @@ import {
   Label,
   Dropdown,
   Rating,
+  Accordion,
+  Checkbox,
 } from 'semantic-ui-react';
 
 /* React Quill */
@@ -38,8 +40,12 @@ export default class EditApp extends React.Component {
       qID: -1,
       qCategory: '',
       qText: '',
-      qOptions: [],
-      qAnswers: [],
+      qOptions0: '',
+      qOptions1: '',
+      qOptions2: '',
+      qOptions3: '',
+      qOptions4: '',
+      qUserAnswers: '',
       qDiffLv: 0,
       qCreatedDate: '',
       qLastUpdated: '',
@@ -87,40 +93,97 @@ export default class EditApp extends React.Component {
       this.setState({ qDiffLv: rating });
     };
 
-    this.handleDeleteQOption = (idx) => {
-      Console.log(`Removing option # ${idx}`);
-      const newOption = this.state.qOptions;
-      newOption.splice(idx, 1);
-      // Console.log(`Option contents: ${newOption}`);
-      this.setState({ qOptions: newOption });
+    this.handleMcOptionToggle = (e, d, i) => {
+      const { checked } = d;
+      // Console.log(`Data: ${checked}, idx: ${i}`);
+
+      let newState = null;
+
+      switch (i) {
+        case 0:
+          newState = this.state.qOptions0;
+          newState.ca = checked ? '1' : '0';
+          this.setState({ qOptions0: newState });
+          break;
+        case 1:
+          newState = this.state.qOptions1;
+          newState.ca = checked ? '1' : '0';
+          this.setState({ qOptions1: newState });
+          break;
+        case 2:
+          newState = this.state.qOptions2;
+          newState.ca = checked ? '1' : '0';
+          this.setState({ qOptions2: newState });
+          break;
+        case 3:
+          newState = this.state.qOptions3;
+          newState.ca = checked ? '1' : '0';
+          this.setState({ qOptions3: newState });
+          break;
+        case 4:
+          newState = this.state.qOptions4;
+          newState.ca = checked ? '1' : '0';
+          this.setState({ qOptions4: newState });
+          break;
+        default:
+          Console.log(`This option is not yet supported. i: ${i}`);
+          break;
+      }
     };
 
-    this.handleAddQOption = () => {
-      const newOption = this.state.qOptions;
-      newOption.push('New Option');
-      this.setState({ qOptions: newOption });
+    this.handleMcOptionContents = (v, i) => {
+      let newState = null;
+
+      switch (i) {
+        case 0:
+          newState = this.state.qOptions0;
+          newState.op = v;
+          this.setState({ qOptions0: newState });
+          break;
+        case 1:
+          newState = this.state.qOptions1;
+          newState.op = v;
+          this.setState({ qOptions1: newState });
+          break;
+        case 2:
+          newState = this.state.qOptions2;
+          newState.op = v;
+          this.setState({ qOptions2: newState });
+          break;
+        case 3:
+          newState = this.state.qOptions3;
+          newState.op = v;
+          this.setState({ qOptions3: newState });
+          break;
+        case 4:
+          newState = this.state.qOptions4;
+          newState.op = v;
+          this.setState({ qOptions4: newState });
+          break;
+        default:
+          Console.log(`This option is not yet supported. i: ${i}`);
+          break;
+      }
     };
 
-    this.handleDeleteQAnswer = (idx) => {
-      Console.log(`Removing answer # ${idx}`);
-      const newAnswer = this.state.qAnswers;
-      newAnswer.splice(idx, 1);
-      // Console.log(`Answer contents: ${newAnswer}`);
-      this.setState({ qAnswers: newAnswer });
-    };
-
-    this.handleAddQAnswer = () => {
-      const newAnswer = this.state.qAnswers;
-      newAnswer.push('New Answer');
-      this.setState({ qAnswers: newAnswer });
+    this.handleUserAnswer = (v) => {
+      this.setState({ qUserAnswers: v });
     };
 
     /* IPC handler from another renderer */
     this.handleIpcR2RAsyncRecv = (event, arg) => {
       const { cmd, data } = arg;
 
+      let tempI = 0;
       let tempVar1 = null;
       let tempVar2 = null;
+      const tempMco = [
+        { op: '', ca: '0' },
+        { op: '', ca: '0' },
+        { op: '', ca: '0' },
+        { op: '', ca: '0' },
+        { op: '', ca: '0' },
+      ];
 
       switch (cmd) {
         case 'launchQEdit':
@@ -142,20 +205,30 @@ export default class EditApp extends React.Component {
             });
           });
 
+          /* Build multiple choice options */
+          for (tempI = 0; tempI < data.editData.QUESTION_DATA.mc.length; tempI += 1) {
+            tempMco[tempI].op = data.editData.QUESTION_DATA.mc[tempI].op;
+            tempMco[tempI].ca = data.editData.QUESTION_DATA.mc[tempI].ca;
+          }
+
           this.setState({
             qID: data.editData.ID,
             qCategory: data.editData.CATEGORY,
             qText: data.editData.QUESTION_DATA.q,
-            qOptions: data.editData.QUESTION_DATA.o,
-            qAnswers: data.editData.QUESTION_DATA.a,
+            qOptions0: tempMco[0],
+            qOptions1: tempMco[1],
+            qOptions2: tempMco[2],
+            qOptions3: tempMco[3],
+            qOptions4: tempMco[4],
+            qUserAnswers: data.editData.QUESTION_DATA.ua,
             qDiffLv: data.editData.DIFFICULTY_LV,
             qCreatedDate: data.editData.CREATED_DATE,
             qLastUpdated: data.editData.LAST_UPDATED,
+            qCatList: tempVar2,
+            qCatGroupList: tempVar1,
             editData: data.editData,
             categories: data.categories,
-            qCatList: tempVar2,
             cat_groups: data.cat_groups,
-            qCatGroupList: tempVar1,
           });
           break;
 
@@ -171,6 +244,24 @@ export default class EditApp extends React.Component {
 
     /* Receive ASYNC from another renderer */
     ipc.on('r2r-async-msg-req', this.handleIpcR2RAsyncRecv);
+
+    /* Helper functions */
+    this.handleQUpdates = (ev, data) => {
+      // Console.log(`QU: ${ev}, ${JSON.stringify(data)}`);
+
+      const newOption = this.state.qOptions;
+      newOption[data['data-key']] = data.value;
+
+      Console.log(
+        `data-key: ${data['data-key']}, new value: ${data.value}, new option: ${JSON.stringify(
+          newOption,
+        )}`,
+      );
+
+      this.setState({ qOptions: newOption });
+    };
+
+    /* End of constructor */
   }
 
   render() {
@@ -178,8 +269,12 @@ export default class EditApp extends React.Component {
       qID,
       qCategory,
       qText,
-      qOptions,
-      qAnswers,
+      qOptions0,
+      qOptions1,
+      qOptions2,
+      qOptions3,
+      qOptions4,
+      qUserAnswers,
       qDiffLv,
       qCreatedDate,
       qLastUpdated,
@@ -189,95 +284,189 @@ export default class EditApp extends React.Component {
     return (
       <Segment>
         <Label attached="top" size="large">{`Question Update: #${qID}`}</Label>
-        <Container>
-          <Label>{`Created date: ${qCreatedDate}`}</Label>
-          <Label>{`Last updated date: ${qLastUpdated}`}</Label>
-        </Container>
-        <br />
-        <Container>
-          <ReactQuill
-            value={qText}
-            modules={this.rQmodules}
-            onChange={this.handleRqChanges}
-            theme="snow"
-          />
-        </Container>
 
-        <br />
+        <Grid>
+          {/* Date and Timestamps */}
+          <Grid.Row>
+            <Container textAlign="center">
+              <Label>{`Created date: ${qCreatedDate}`}</Label>
+              <Label>{`Last updated date: ${qLastUpdated}`}</Label>
+            </Container>
+          </Grid.Row>
 
-        <Container>
-          <Segment>
-            <Label attached="top left">Options</Label>
-            {qOptions.map((item, i) => (
-              <div key={`option-${uuidv4()}`}>
-                <Label horizontal color={'teal'}>
-                  {`Option ${i + 1}`}
-                  <Icon
-                    name="delete"
-                    onClick={() => {
-                      this.handleDeleteQOption(i);
+          {/* Questions */}
+          <Grid.Row>
+            <Container fluid>
+              <Segment>
+                <Label attached="top left">Question</Label>
+                <ReactQuill
+                  value={qText}
+                  modules={this.rQmodules}
+                  onChange={this.handleRqChanges}
+                  theme="snow"
+                />
+              </Segment>
+            </Container>
+          </Grid.Row>
+
+          {/* Multiple Choise group */}
+          <Grid.Row>
+            <Container fluid>
+              <Segment>
+                <Label attached="top left">Multiple choice options</Label>
+                <Segment>
+                  <Label color="teal" attached="top left">
+                    <Checkbox
+                      label="Option 1 Answer"
+                      checked={qOptions0.ca === '1'}
+                      readOnly={false}
+                      onChange={(e, d) => {
+                        this.handleMcOptionToggle(e, d, 0);
+                      }}
+                    />
+                  </Label>
+                  <ReactQuill
+                    value={qOptions0.op}
+                    modules={this.rQmodules}
+                    theme="snow"
+                    onChange={(v) => {
+                      this.handleMcOptionContents(v, 0);
                     }}
                   />
-                </Label>
-                <Input>{item}</Input>
-                <br />
-                <br />
-              </div>
-            ))}
-            <Label horizontal as="a" color={'blue'} onClick={this.handleAddQOption}>
-              <Icon name="add" />
-              Add new option
-            </Label>
-          </Segment>
+                </Segment>
 
-          <br />
-
-          <Segment>
-            <Label attached="top left">Answers</Label>
-            {qAnswers.map((item, i) => (
-              <div key={`answer-${uuidv4()}`}>
-                <Label horizontal color={'green'}>
-                  {`Answer ${i + 1}`}
-                  <Icon
-                    name="delete"
-                    onClick={() => {
-                      this.handleDeleteQAnswer(i);
+                <Segment>
+                  <Label color="teal" attached="top left">
+                    <Checkbox
+                      label="Option 2 Answer"
+                      checked={qOptions1.ca === '1'}
+                      readOnly={false}
+                      onChange={(e, d) => {
+                        this.handleMcOptionToggle(e, d, 1);
+                      }}
+                    />
+                  </Label>
+                  <ReactQuill
+                    value={qOptions1.op}
+                    modules={this.rQmodules}
+                    theme="snow"
+                    onChange={(v) => {
+                      this.handleMcOptionContents(v, 1);
                     }}
                   />
-                </Label>
-                <Input>{item}</Input>
-                <br />
-                <br />
-              </div>
-            ))}
-            <Label horizontal as="a" color={'blue'} onClick={this.handleAddQAnswer}>
-              <Icon name="add" />
-              Add new answer
-            </Label>
-          </Segment>
+                </Segment>
 
-          <br />
+                <Segment>
+                  <Label color="teal" attached="top left">
+                    <Checkbox
+                      label="Option 3 Answer"
+                      checked={qOptions2.ca === '1'}
+                      readOnly={false}
+                      onChange={(e, d) => {
+                        this.handleMcOptionToggle(e, d, 2);
+                      }}
+                    />
+                  </Label>
+                  <ReactQuill
+                    value={qOptions2.op}
+                    modules={this.rQmodules}
+                    theme="snow"
+                    onChange={(v) => {
+                      this.handleMcOptionContents(v, 2);
+                    }}
+                  />
+                </Segment>
 
-          <Segment>
-            <Label attached="top left">Select Category</Label>
-            <Dropdown placeholder="Select category" section options={qCatList} />
-          </Segment>
+                <Segment>
+                  <Label color="teal" attached="top left">
+                    <Checkbox
+                      label="Option 4 Answer"
+                      checked={qOptions3.ca === '1'}
+                      readOnly={false}
+                      onChange={(e, d) => {
+                        this.handleMcOptionToggle(e, d, 3);
+                      }}
+                    />
+                  </Label>
+                  <ReactQuill
+                    value={qOptions3.op}
+                    modules={this.rQmodules}
+                    theme="snow"
+                    onChange={(v) => {
+                      this.handleMcOptionContents(v, 3);
+                    }}
+                  />
+                </Segment>
 
-          <br />
+                <Segment>
+                  <Label color="teal" attached="top left">
+                    <Checkbox
+                      label="Option 5 Answer"
+                      checked={qOptions4.ca === '1'}
+                      readOnly={false}
+                      onChange={(e, d) => {
+                        this.handleMcOptionToggle(e, d, 4);
+                      }}
+                    />
+                  </Label>
+                  <ReactQuill
+                    value={qOptions4.op}
+                    modules={this.rQmodules}
+                    theme="snow"
+                    onChange={(v) => {
+                      this.handleMcOptionContents(v, 4);
+                    }}
+                  />
+                </Segment>
+              </Segment>
+            </Container>
+          </Grid.Row>
+          <Grid.Row>
+            <Container fluid>
+              <Segment>
+                <Label attached="top left">User&quot;s manual answer</Label>
+                <ReactQuill
+                  value={qUserAnswers}
+                  modules={this.rQmodules}
+                  theme="snow"
+                  onChange={this.handleUserAnswer}
+                />
+              </Segment>
+            </Container>
+          </Grid.Row>
+          <Grid.Row>
+            <Container fluid>
+              <Segment>
+                <Label attached="top left">Select Category</Label>
+                <Dropdown placeholder="Select category" options={qCatList} />
+              </Segment>
+            </Container>
+          </Grid.Row>
 
-          <Label>
-            Difficulty Level:
-            <Label.Detail>
-              <Rating icon="star" maxRating={5} rating={qDiffLv} onRate={this.handleQDiffChanges} />
-            </Label.Detail>
-          </Label>
-        </Container>
-        <br />
-        <Container>
-          <Button size="mini">Update</Button>
-          <Button size="mini">Reset</Button>
-          <Button size="mini">Cancel</Button>
-        </Container>
+          <Grid.Row>
+            <Container fluid>
+              <Segment>
+                <Label attached="top left">Difficulty</Label>
+                <Label horizontal>Difficulty Level:</Label>
+                <Rating
+                  icon="star"
+                  maxRating={5}
+                  rating={qDiffLv}
+                  onRate={this.handleQDiffChanges}
+                />
+              </Segment>
+            </Container>
+          </Grid.Row>
+
+          {/* Commit buttons */}
+          <Grid.Row>
+            <Container fluid>
+              <Button size="mini">Update</Button>
+              <Button size="mini">Reset</Button>
+              <Button size="mini">Cancel</Button>
+            </Container>
+          </Grid.Row>
+        </Grid>
       </Segment>
     );
   }

@@ -101,12 +101,12 @@ export default class App extends React.Component {
           Header: 'Questions',
           accessor: 'QUESTION_DATA',
           Cell: (p) => {
-            const { q, o, a } = p.value;
+            const { q, mc, ua } = p.value;
             return (
               <div>
                 <div>{`Q: ${q}`}</div>
-                <div>{`O: ${o}`}</div>
-                <div>{`A: ${a}`}</div>
+                <div>{`MC: ${JSON.stringify(mc)}`}</div>
+                <div>{`UA: ${ua}`}</div>
               </div>
             );
           },
