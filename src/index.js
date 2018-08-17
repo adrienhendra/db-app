@@ -11,6 +11,7 @@ const squi = require('electron-squirrel-startup');
 
 /* My database */
 const mydb = new DB();
+let mydbVer = null;
 
 /* My IPC */
 const ipc = ipcMain;
@@ -91,10 +92,12 @@ const handleDbAsyncCommands = async (event, arg) => {
       try {
         // Console.log(data);
         res = await mydb.reloadDb(data.newPath);
+        mydbVer = res.data.version.version;
         retVal.errMsg = null;
         retVal.data = { success: res.success, data: null };
       } catch (err) {
         // Console.log(err);
+        mydbVer = null;
         retVal.errMsg = err.errMsg;
         retVal.data = { success: err.success, data: err.data };
       }
@@ -104,6 +107,31 @@ const handleDbAsyncCommands = async (event, arg) => {
       try {
         // Console.log(data);
         res = await mydb.getStatus();
+        retVal.errMsg = res.errMsg;
+        retVal.data = { success: res.success, data: res.data };
+      } catch (err) {
+        // Console.log(err);
+        retVal.errMsg = err.errMsg;
+        retVal.data = { success: err.success, data: err.data };
+      }
+      break;
+
+    case 'getDbVersion':
+      try {
+        // Console.log(data);
+        if (mydbVer === null) {
+          res = {
+            success: false,
+            errMsg: 'DB version unknown / connection failed',
+            data: { version: { version: 'unknown' } },
+          };
+        } else {
+          res = {
+            success: true,
+            errMsg: null,
+            data: { version: { version: mydbVer } },
+          };
+        }
         retVal.errMsg = res.errMsg;
         retVal.data = { success: res.success, data: res.data };
       } catch (err) {
@@ -313,9 +341,13 @@ const createWindow = async () => {
 // Some APIs can only be used after this event occurs.
 app.on('ready', async () => {
   /* Start connection to DB */
+  let dbConnectStatus = null;
   try {
-    await mydb.connect();
+    dbConnectStatus = await mydb.connect();
+    mydbVer = dbConnectStatus.data.version.version;
+    Console.log(`DB connect success: ${dbConnectStatus.success}, version: ${mydbVer}`);
   } catch (err) {
+    mydbVer = null;
     Console.log(`Cannot connect to database: ${err.errMsg}, ${err.data}`);
   }
 

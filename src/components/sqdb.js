@@ -41,7 +41,6 @@ export default class SQDB {
       });
 
     /* Connect to SQLite DB */
-    // this.connect = (dbPath = './db/sqdb.db') =>
     this.connect = (dbPath = this.defDbPath) =>
       new Promise((resolve, reject) => {
         let activeDbPath = dbPath;
@@ -52,7 +51,6 @@ export default class SQDB {
             Console.log(`DB file (${activeDbPath}) exists`);
           } else {
             Console.log(`DB file (${activeDbPath}) doesn't exists. Using default DB.`);
-            // activeDbPath = './db/sqdb.db';
             activeDbPath = this.defDbPath;
           }
 
@@ -68,13 +66,14 @@ export default class SQDB {
               reject(retVal);
             } else {
               /* Good? Now check simple query to see if this is correct DB file */
-              this.connection.run(
-                'SELECT VERSION_HISTORY AS ver FROM META WHERE ID=(SELECT MAX(ID) FROM META)',
-                (err2) => {
+              this.connection.get(
+                'SELECT VERSION_HISTORY AS version FROM META WHERE ID=(SELECT MAX(ID) FROM META)',
+                (err2, row) => {
                   if (err2 !== null) {
                     Console.log(`SQDB most likely not database file: ${err2}`);
                     retVal.success = false;
                     retVal.errMsg = `SQDB error code: ${err2.name}, ${err2.message}`;
+                    retVal.data = { version: row };
                     reject(retVal);
                   } else {
                     Console.log(`Valid database file ${activeDbPath}.`);
@@ -89,6 +88,7 @@ export default class SQDB {
 
                     retVal.success = true;
                     retVal.errMsg = null;
+                    retVal.data = { version: row };
                     resolve(retVal);
                   }
                 },

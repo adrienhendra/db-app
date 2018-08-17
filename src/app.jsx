@@ -48,6 +48,7 @@ export default class App extends React.Component {
       text: '', // You can also pass a Quill Delta here
       dbDataFile: './db/sqdb.db',
       dbStatus: -1,
+      dbVersion: 'unknown',
       dbDataRows: [],
       pageLoading: false,
       qListLoading: false,
@@ -70,6 +71,7 @@ export default class App extends React.Component {
       );
     };
 
+    /* Recalculate table size */
     this.recalcQtableSize = () => {
       const windowBound = electron.remote.getCurrentWindow().getBounds();
       Console.log(`Current window bound: ${windowBound.width}x ${windowBound.height}`);
@@ -80,7 +82,9 @@ export default class App extends React.Component {
       this.setState({ qTableHeight: tableHeight });
     };
 
-    /* Router target */
+    /* Router targets */
+
+    /* Home / main page */
     this.HomePage = () => {
       /* Get data rows */
       const { dbDataRows, qListLoading, qTableHeight } = this.state;
@@ -155,8 +159,9 @@ export default class App extends React.Component {
       );
     };
 
+    /* DB Info / detail page */
     this.DbPage = () => {
-      const { dbDataFile, dbStatus, pageLoading } = this.state;
+      const { dbDataFile, dbStatus, dbVersion } = this.state;
 
       return (
         <Segment textAlign="center">
@@ -167,6 +172,10 @@ export default class App extends React.Component {
               {dbDataFile}
             </Label>
             <Icon name="circle" color={DbStatusColors[dbStatus]} />
+            <Label horizontal pointing="left">{`version: ${dbVersion}`}</Label>
+          </Container>
+          <br />
+          <Container>
             <Button icon compact labelPosition="right" size="mini" onClick={() => this.reloadDb()}>
               <Icon name="refresh" />
               Refresh DB
@@ -225,6 +234,12 @@ export default class App extends React.Component {
         newPath: this.state.dbDataFile,
       });
       Console.log('Reload DB requested!');
+    };
+
+    /* Get known DB version */
+    this.getDbVersion = () => {
+      this.sendDbCmdAsync('getDbVersion');
+      Console.log('Get DB version requested!');
     };
 
     /* Export current DB file */
@@ -310,6 +325,20 @@ export default class App extends React.Component {
           } else {
             Console.log(`Get DB status failed: ${errMsg}, data: ${data}`);
             this.setState({ dbStatus: 2 });
+          }
+
+          /* Auto request for version */
+          this.sendDbCmdAsync('getDbVersion');
+          break;
+
+        case 'getDbVersion':
+          if (data.success === true) {
+            // Console.log('Get DB version succeeded');
+            // Console.log(`DB version: ${data.data.version.version}`);
+            this.setState({ dbVersion: data.data.version.version });
+          } else {
+            Console.log(`Get DB version failed: ${errMsg}, data: ${data}`);
+            this.setState({ dbVersion: 'unknown' });
           }
           break;
 

@@ -157,92 +157,85 @@ export default class EditApp extends React.Component {
       qLastUpdated,
     } = this.state;
     return (
-      <div>
-        <Segment>
-          <Label attached="top" size="large">{`Question Update: #${qID}`}</Label>
-          <Container>
-            <Label>{`Created date: ${qCreatedDate}`}</Label>
-            <Label>{`Last updated date: ${qLastUpdated}`}</Label>
-          </Container>
-          <br />
-          <Container>
-            <ReactQuill
-              value={qText}
-              modules={this.rQmodules}
-              onChange={this.handleRqChanges}
-              theme="snow"
-            />
-          </Container>
-          <br />
-          <Container>
-            <Segment>
-              <Label attached="top left">Options</Label>
-              {qOptions.map((item, i) => (
-                <div key={`option-${uuidv4()}`}>
-                  <Label horizontal color={'teal'}>
-                    {`Option ${i + 1}`}
-                    <Icon
-                      name="delete"
-                      onClick={() => {
-                        this.handleDeleteQOption(i);
-                      }}
-                    />
-                  </Label>
-                  <Input>{item}</Input>
-                  <br />
-                  <br />
-                </div>
-              ))}
-              <Label horizontal as="a" color={'blue'} onClick={this.handleAddQOption}>
-                <Icon name="add" />
-                Add new option
-              </Label>
-            </Segment>
-            <br />
-            <Segment>
-              <Label attached="top left">Answers</Label>
-              {qAnswers.map((item, i) => (
-                <div key={`answer-${uuidv4()}`}>
-                  <Label horizontal color={'green'}>
-                    {`Answer ${i + 1}`}
-                    <Icon
-                      name="delete"
-                      onClick={() => {
-                        this.handleDeleteQAnswer(i);
-                      }}
-                    />
-                  </Label>
-                  <Input>{item}</Input>
-                  <br />
-                  <br />
-                </div>
-              ))}
-              <Label horizontal as="a" color={'blue'} onClick={this.handleAddQAnswer}>
-                <Icon name="add" />
-                Add new answer
-              </Label>
-            </Segment>
-            <br />
-            <Label>
-              Difficulty Level:
-              <Label.Detail>
-                <Rating
-                  icon="star"
-                  maxRating={5}
-                  rating={qDiffLv}
-                  onRate={this.handleQDiffChanges}
-                />
-              </Label.Detail>
+      <Segment>
+        <Label attached="top" size="large">{`Question Update: #${qID}`}</Label>
+        <Container>
+          <Label>{`Created date: ${qCreatedDate}`}</Label>
+          <Label>{`Last updated date: ${qLastUpdated}`}</Label>
+        </Container>
+        <br />
+        <Container>
+          <ReactQuill
+            value={qText}
+            modules={this.rQmodules}
+            onChange={this.handleRqChanges}
+            theme="snow"
+          />
+        </Container>
+        <br />
+        <Container>
+          <Segment>
+            <Label attached="top left">Options</Label>
+            {qOptions.map((item, i) => (
+              <div key={`option-${uuidv4()}`}>
+                <Label horizontal color={'teal'}>
+                  {`Option ${i + 1}`}
+                  <Icon
+                    name="delete"
+                    onClick={() => {
+                      this.handleDeleteQOption(i);
+                    }}
+                  />
+                </Label>
+                <Input>{item}</Input>
+                <br />
+                <br />
+              </div>
+            ))}
+            <Label horizontal as="a" color={'blue'} onClick={this.handleAddQOption}>
+              <Icon name="add" />
+              Add new option
             </Label>
-          </Container>
+          </Segment>
           <br />
-          <Container>
-            <Button size="mini">Update</Button>
-            <Button size="mini">Reset</Button>
-            <Button size="mini">Cancel</Button>
-          </Container>
-        </Segment>
-      </div>
+          <Segment>
+            <Label attached="top left">Answers</Label>
+            {qAnswers.map((item, i) => (
+              <div key={`answer-${uuidv4()}`}>
+                <Label horizontal color={'green'}>
+                  {`Answer ${i + 1}`}
+                  <Icon
+                    name="delete"
+                    onClick={() => {
+                      this.handleDeleteQAnswer(i);
+                    }}
+                  />
+                </Label>
+                <Input>{item}</Input>
+                <br />
+                <br />
+              </div>
+            ))}
+            <Label horizontal as="a" color={'blue'} onClick={this.handleAddQAnswer}>
+              <Icon name="add" />
+              Add new answer
+            </Label>
+          </Segment>
+          <br />
+          <Label>
+            Difficulty Level:
+            <Label.Detail>
+              <Rating icon="star" maxRating={5} rating={qDiffLv} onRate={this.handleQDiffChanges} />
+            </Label.Detail>
+          </Label>
+        </Container>
+        <br />
+        <Container>
+          <Button size="mini">Update</Button>
+          <Button size="mini">Reset</Button>
+          <Button size="mini">Cancel</Button>
+        </Container>
+      </Segment>
     );
   }
 }
